@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import AnimatedSection from "@/components/AnimatedSection";
 import { Users, Shield, CheckCircle, Info } from "lucide-react";
 import { useMemo } from "react";
+import WorldMap from "./WorldMap";
 
 const regions = [
   { id: "north-central-america", label: "North/Central America", x: "18%", y: "35%" },
@@ -172,50 +173,11 @@ const PricingCalculator = () => {
                   </h3>
                 </div>
 
-                <div className="relative w-full aspect-[2/1] bg-muted/20 rounded-xl overflow-hidden">
-                  {/* Dotted world map placeholder */}
-                  <svg viewBox="0 0 800 400" className="w-full h-full opacity-30">
-                    {/* Simple dot pattern to represent world map */}
-                    {Array.from({ length: 40 }).map((_, row) =>
-                      Array.from({ length: 80 }).map((_, col) => {
-                        const x = col * 10 + 5;
-                        const y = row * 10 + 5;
-                        // Simple landmass approximation
-                        const isLand =
-                          (x > 100 && x < 300 && y > 80 && y < 300) || // Americas
-                          (x > 350 && x < 500 && y > 60 && y < 250) || // Europe/Africa
-                          (x > 500 && x < 700 && y > 80 && y < 300) || // Asia
-                          (x > 600 && x < 750 && y > 280 && y < 380); // Australia
-                        return isLand ? (
-                          <circle
-                            key={`${row}-${col}`}
-                            cx={x}
-                            cy={y}
-                            r={2}
-                            fill="hsl(var(--muted-foreground))"
-                            opacity={0.4}
-                          />
-                        ) : null;
-                      })
-                    )}
-                  </svg>
-
-                  {/* Region labels */}
-                  {regions.map((region) => (
-                    <button
-                      key={region.id}
-                      onClick={() => toggleRegion(region.id)}
-                      className={`absolute text-xs font-medium px-3 py-1.5 rounded-full transition-all ${
-                        data.selectedRegions.includes(region.id)
-                          ? "bg-primary text-primary-foreground shadow-md"
-                          : "bg-background text-foreground border border-border hover:border-primary"
-                      }`}
-                      style={{ left: region.x, top: region.y, transform: "translate(-50%, -50%)" }}
-                    >
-                      {region.label}
-                    </button>
-                  ))}
-                </div>
+                <WorldMap
+                  selectedRegions={data.selectedRegions}
+                  onToggleRegion={toggleRegion}
+                  regions={regions}
+                />
               </div>
             </AnimatedSection>
           </div>
