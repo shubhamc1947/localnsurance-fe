@@ -12,7 +12,7 @@ const HeroSection = () => {
         <div className="text-center max-w-3xl mx-auto mb-16">
           <AnimatedSection>
             <h1 className="font-display font-extrabold text-3xl md:text-4xl lg:text-5xl text-foreground leading-tight mb-6">
-              <span className="text-accent text-[#0066FF]">Empower Your Workforce</span> with Comprehensive Remote Health Insurance
+              <span className="text-[#0066FF]">Empower Your Workforce</span> with Comprehensive Remote Health Insurance
             </h1>
           </AnimatedSection>
           <AnimatedSection delay={0.15}>
