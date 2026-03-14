@@ -20,6 +20,9 @@ export interface QuoteFormData {
   state: string;
   postalCode: string;
   role: string;
+  phoneDialCode: string;
+  phone: string;
+  password: string;
 
   // Step 3 - Company Info
   companyType: string;
@@ -62,6 +65,9 @@ export const initialQuoteData: QuoteFormData = {
   state: "",
   postalCode: "",
   role: "",
+  phoneDialCode: "us",
+  phone: "",
+  password: "",
   companyType: "",
   companyLegalName: "",
   website: "",
