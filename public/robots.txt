@@ -12,3 +12,9 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard/
+Disallow: /verify-otp
+Disallow: /reset-password
+Disallow: /password-reset-success
+
+Sitemap: https://localnsurance.vercel.app/sitemap.xml
