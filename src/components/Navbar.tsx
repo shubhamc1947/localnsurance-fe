@@ -14,7 +14,7 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
+    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-md">
       <div className="container mx-auto flex items-center justify-between py-4 px-4 lg:px-8">
         <div className="flex items-center gap-1">
           {/* <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
@@ -59,7 +59,7 @@ const Navbar = () => {
           variant="outline"
           size="sm"
           onClick={() => navigate("/login")}
-          className="hidden lg:inline-flex rounded-full px-6 text-sm font-medium border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          className="hidden lg:inline-flex rounded-full px-6 text-sm font-medium border-primary text-primary bg-[#D0E3FF] hover:bg-primary hover:text-primary-foreground"
         >
           Sign In
         </Button>
