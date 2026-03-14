@@ -26,7 +26,7 @@ const CTASection = () => {
   };
 
   return (
-    <section className="bg-background py-20 px-4">
+    <section className="bg-background py-20 px-4" id="contact">
       <div className="mx-auto max-w-6xl">
         <AnimatedSection>
           <div className="mb-10 text-center">
