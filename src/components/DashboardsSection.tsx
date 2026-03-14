@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import AnimatedSection from "./AnimatedSection";
-import slideQuote from "@/assets/slide-quote.jpg";
-import slideInvoices from "@/assets/slide-invoices.jpg";
-import slidePlanTree from "@/assets/slide-plantree.jpg";
-import slideEmployees from "@/assets/slide-employees.jpg";
-import dashboard1 from "@/assets/dashboard-1.jpg";
-import dashboard2 from "@/assets/dashboard-2.jpg";
+import slideQuote from "@/assets/dashboard-slider-1.png";
+import slideInvoices from "@/assets/dashboard-slider-2.png";
+import slidePlanTree from "@/assets/dashboard-slider-3.png";
+import slideEmployees from "@/assets/dashboard-slider-4.png";
+import dashboard1 from "@/assets/dashboard-slider-5.png";
+import dashboard2 from "@/assets/dashboard-slider-6.png";
 
 const slides = [
   {
@@ -86,8 +86,8 @@ const DashboardsSection = () => {
   const slide = slides[current];
 
   return (
-    <section id="products" className="py-16 lg:py-24 bg-background">
-      <div className="container mx-auto px-4 lg:px-8 relative">
+    <section id="products" className="py-16 lg:py-24 bg-background relative">
+      <div className="container mx-auto px-4 lg:px-8">
         <AnimatedSection>
           <div className="text-center mb-6">
             <h2 className="font-display font-bold text-2xl md:text-3xl lg:text-4xl text-foreground">
@@ -107,35 +107,41 @@ const DashboardsSection = () => {
           {/* Arrows */}
           <button
             onClick={prev}
-            className="absolute left-0 top-1/2  z-10 w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+            className="absolute left-0 top-1/2 z-10 w-14 h-14 rounded-r-[50%] bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
           >
-            <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+            <ChevronLeft className="w-6 h-6 text-muted-foreground" />
           </button>
           <button
             onClick={next}
-            className="absolute right-0 top-1/2 z-10 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
+            className="absolute right-0 top-1/2 z-10 w-14 h-14 rounded-l-[50%] bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
           >
-            <ChevronRight className="w-5 h-5 text-primary" />
+            <ChevronRight className="w-6 h-6 text-primary" />
           </button>
 
-          <div className="overflow-hidden rounded-3xl">
-            <div className={`flex flex-col lg:flex-row bg-gradient-to-br ${slide.gradient} rounded-3xl min-h-[500px]`}>
+          <div className="rounded-3xl overflow-hidden">
+            <div className="flex flex-col lg:flex-row min-h-[460px] relative">
+
+              {/* Absolute gradient background — left 70% */}
+              <div
+                className={`absolute inset-y-0 left-0 w-[70%] rounded-3xl pointer-events-none z-0 bg-gradient-to-br ${slide.gradient}`}
+              />
+
               {/* Left content */}
-              <div className="w-full lg:w-[45%] p-8 lg:p-12 flex flex-col justify-center">
+              <div className="w-full lg:w-[45%] p-8 lg:p-12 flex flex-col justify-center relative z-10">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center">
-                    <span className="font-display font-bold text-accent-foreground text-sm">{slide.number}.</span>
+                  <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                    <span className="font-display font-bold text-primary text-sm">{slide.number}.</span>
                   </div>
-                  <h3 className="font-display font-bold text-primary-foreground text-2xl lg:text-3xl">{slide.title}</h3>
+                  <h3 className="font-display font-bold text-white text-2xl lg:text-3xl">{slide.title}</h3>
                 </div>
-                <p className="text-primary-foreground/80 text-sm mb-8 leading-relaxed">{slide.description}</p>
+                <p className="text-white/75 text-sm mb-8 leading-relaxed">{slide.description}</p>
 
                 <div className="space-y-4">
                   {slide.features.map((feature) => (
-                    <div key={feature.title} className="bg-background/90 backdrop-blur-sm rounded-xl p-4">
+                    <div key={feature.title} className="bg-white/90 backdrop-blur-sm rounded-xl p-4">
                       <div className="flex items-start gap-3">
-                        <div className={`w-8 h-8 rounded-lg ${feature.color} flex items-center justify-center flex-shrink-0`}>
-                          <span className="text-accent text-sm">⚡</span>
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-primary text-sm">⚡</span>
                         </div>
                         <div>
                           <h4 className="font-display font-semibold text-foreground text-sm">{feature.title}</h4>
@@ -148,12 +154,12 @@ const DashboardsSection = () => {
               </div>
 
               {/* Right image */}
-              <div className="w-full lg:w-[55%] flex items-center justify-center p-4 lg:p-8">
-                <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-background/20 max-w-full">
+              <div className="w-full lg:w-[55%] flex items-end justify-center px-6 lg:px-10 pt-8 relative z-10">
+                <div className="rounded-t-xl overflow-hidden shadow-2xl w-full">
                   <img
                     src={slide.image}
                     alt={slide.title}
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto object-cover object-top"
                   />
                 </div>
               </div>

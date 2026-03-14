@@ -56,8 +56,8 @@ const ReviewsSection = () => {
   const visible = reviews.slice(page * perPage, page * perPage + perPage);
 
   return (
-    <section className="py-16 lg:py-24 bg-[#F6F6F6] ">
-      <div className="container mx-auto px-4 lg:px-16 relative">
+    <section className="py-16 lg:py-24 bg-[#F6F6F6] relative">
+      <div className="container mx-auto px-4 lg:px-16 ">
         <AnimatedSection>
           <div className="text-center mb-12">
             <h2 className="font-display font-bold text-2xl md:text-3xl lg:text-4xl text-foreground">
