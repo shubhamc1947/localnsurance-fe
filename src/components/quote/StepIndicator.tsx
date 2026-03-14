@@ -20,7 +20,7 @@ const StepIndicator = () => {
             {step}
           </div>
           {i < steps.length - 1 && (
-            <div className="flex-1 h-1 mx-2 rounded-full overflow-hidden bg-border">
+            <div className="flex-1 h-2 mx-2 rounded-full overflow-hidden bg-border">
               <div
                 className="h-full bg-accent transition-all duration-500"
                 style={{ width: i + 1 < currentStep ? "100%" : "0%" }}
