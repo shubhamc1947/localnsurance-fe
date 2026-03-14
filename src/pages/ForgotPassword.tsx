@@ -30,7 +30,7 @@ const ForgotPassword = () => {
           className="w-full max-w-lg"
         >
           <h1 className="font-display text-4xl font-bold mb-2">
-            <span className="text-primary italic">Reset</span>{" "}
+            <span className="text-primary ">Reset</span>{" "}
             <span className="text-foreground">your password</span>
           </h1>
           <p className="text-muted-foreground text-sm mb-8">

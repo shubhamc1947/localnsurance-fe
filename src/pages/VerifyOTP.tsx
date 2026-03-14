@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import envlop from "@/assets/envlop.png"
 import AuthSidebar from "@/components/auth/AuthSidebar";
 
 const VerifyOTP = () => {
@@ -32,10 +33,13 @@ const VerifyOTP = () => {
           className="w-full max-w-lg"
         >
           {/* Email icon */}
-          <div className="mb-6 text-4xl">✉️</div>
+          <div className="mb-6 text-4xl">
+            <img src={envlop} alt="Email" className="w-16 h-16" />
+
+          </div>
 
           <h1 className="font-display text-4xl font-bold mb-2">
-            <span className="text-primary italic">Reset</span>{" "}
+            <span className="text-primary ">Reset</span>{" "}
             <span className="text-foreground">your password</span>
           </h1>
           <p className="text-muted-foreground text-sm mb-8">
