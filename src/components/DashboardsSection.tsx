@@ -87,7 +87,7 @@ const DashboardsSection = () => {
 
   return (
     <section id="products" className="py-16 lg:py-24 bg-background">
-      <div className="container mx-auto px-4 lg:px-8">
+      <div className="container mx-auto px-4 lg:px-8 relative">
         <AnimatedSection>
           <div className="text-center mb-6">
             <h2 className="font-display font-bold text-2xl md:text-3xl lg:text-4xl text-foreground">
@@ -103,17 +103,17 @@ const DashboardsSection = () => {
         </AnimatedSection>
 
         {/* Carousel */}
-        <div className="relative mt-12">
+        <div className="mt-12">
           {/* Arrows */}
           <button
             onClick={prev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 lg:-translate-x-12 z-10 w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+            className="absolute left-0 top-1/2  z-10 w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
           >
             <ChevronLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <button
             onClick={next}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 lg:translate-x-12 z-10 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
+            className="absolute right-0 top-1/2 z-10 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center hover:bg-primary/30 transition-colors"
           >
             <ChevronRight className="w-5 h-5 text-primary" />
           </button>
