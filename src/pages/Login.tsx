@@ -93,7 +93,7 @@ const Login = () => {
                 type="button"
                 variant="outline"
                 onClick={() => navigate("/")}
-                className="rounded-full px-8 h-12 text-sm font-medium border-border text-muted-foreground"
+                className="rounded-full px-8 h-12 text-sm font-medium border-border text-muted-foreground bg-[#F6F6F6]"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
