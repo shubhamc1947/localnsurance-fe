@@ -91,7 +91,7 @@ const DashboardsSection = () => {
         <AnimatedSection>
           <div className="text-center mb-6">
             <h2 className="font-display font-bold text-2xl md:text-3xl lg:text-4xl text-foreground">
-              <span className="text-primary underline decoration-2 underline-offset-4">Localsurance</span> Internal Dashboard
+              <span className="text-primary ">Localsurance</span> Internal Dashboard
             </h2>
             <p className="text-muted-foreground mt-2 font-semibold text-base">
               Streamline Your Insurance Management with Localsurance's Advanced Dashboard

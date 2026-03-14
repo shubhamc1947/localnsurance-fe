@@ -118,7 +118,7 @@ const WhyChooseSection = () => {
                         {feature.icon}
                       </div>
                       <div>
-                        <h3 className="font-display font-semibold text-foreground text-base mb-1">{feature.title}</h3>
+                        <h3 className="font-display font-bold text-foreground text-base mb-1 text-[#1F1F1F]">{feature.title}</h3>
                         <p className="text-muted-foreground text-xs leading-relaxed">{feature.description}</p>
                       </div>
                     </div>
@@ -144,7 +144,7 @@ const WhyChooseSection = () => {
                         {feature.icon}
                       </div>
                       <div>
-                        <h3 className="font-display font-semibold text-foreground text-base mb-1">{feature.title}</h3>
+                        <h3 className="font-display font-bold text-foreground text-base mb-1 text-[#1F1F1F]">{feature.title}</h3>
                         <p className="text-muted-foreground text-xs leading-relaxed">{feature.description}</p>
                       </div>
                     </div>
