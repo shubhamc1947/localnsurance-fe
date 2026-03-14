@@ -1,3 +1,5 @@
+import { FOOTER_COLUMNS, FOOTER_CONTACT, FOOTER_LEGAL } from "@/data/data";
+
 const Footer = () => {
   return (
     <footer className="bg-foreground text-background py-12 lg:py-16">
@@ -22,59 +24,33 @@ const Footer = () => {
                 <path d="M231.489 26C229.702 26 228.157 25.6013 226.854 24.804C225.552 23.9951 224.543 22.8569 223.828 21.3893C223.113 19.9102 222.756 18.1653 222.756 16.1547C222.756 14.1093 223.107 12.3471 223.811 10.868C224.525 9.37733 225.529 8.23333 226.82 7.436C228.123 6.63867 229.667 6.24 231.454 6.24C233.265 6.24 234.809 6.656 236.089 7.488C237.38 8.30844 238.36 9.49867 239.029 11.0587C239.709 12.6187 240.032 14.4964 239.997 16.692H237.922V15.9987C237.865 13.4333 237.288 11.4804 236.193 10.14C235.098 8.79955 233.53 8.12933 231.489 8.12933C229.379 8.12933 227.748 8.82844 226.595 10.2267C225.454 11.6133 224.883 13.5778 224.883 16.12C224.883 18.6391 225.454 20.592 226.595 21.9787C227.748 23.3653 229.368 24.0587 231.454 24.0587C232.896 24.0587 234.152 23.7236 235.224 23.0533C236.308 22.3716 237.167 21.4009 237.801 20.1413L239.6 20.9387C238.85 22.5564 237.767 23.8044 236.349 24.6827C234.93 25.5609 233.311 26 231.489 26ZM224.122 16.692V14.8893H238.873V16.692H224.122Z" fill="white"/>
               </svg>
             </a>
-            <p className="text-background/60 text-xs mb-4">Best health insurance provider for remote teams.</p>
-            <p className="text-background/70 text-xs">Mob: +1 (000)-000-0000</p>
-            <p className="text-background/70 text-xs">Fax : +1 (000)-000-0000</p>
+            <p className="text-background/60 text-xs mb-4">{FOOTER_CONTACT.tagline}</p>
+            <p className="text-background/70 text-xs">Mob: {FOOTER_CONTACT.mob}</p>
+            <p className="text-background/70 text-xs">Fax : {FOOTER_CONTACT.fax}</p>
           </div>
 
-          {/* We Build Our Product For */}
-          <div>
-            <h4 className="font-display font-semibold text-xs text-background/50 uppercase tracking-wide mb-4">We Build Our Product For:</h4>
-            <ul className="space-y-3">
-              {["Employers", "Employees", "Insurance Providers", "InsurTech Startups"].map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-background/80 hover:text-background text-sm transition-colors">{link}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* About Company */}
-          <div>
-            <h4 className="font-display font-semibold text-xs text-background/50 uppercase tracking-wide mb-4">About Company</h4>
-            <ul className="space-y-3">
-              {["Contact Us", "Work with us", "HR Information", "Press Coverage"].map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-background/80 hover:text-background text-sm transition-colors">{link}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Localsurance Academy */}
-          <div>
-            <h4 className="font-display font-semibold text-xs text-background/50 uppercase tracking-wide mb-4">Localsurance Academy</h4>
-            <ul className="space-y-3">
-              {["For Employer", "For Employee", "For Insurance providers"].map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-background/80 hover:text-background text-sm transition-colors">{link}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Link columns */}
+          {FOOTER_COLUMNS.map((col) => (
+            <div key={col.heading}>
+              <h4 className="font-display font-semibold text-xs text-background/50 uppercase tracking-wide mb-4">{col.heading}</h4>
+              <ul className="space-y-3">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <a href={link.href} className="text-background/80 hover:text-background text-sm transition-colors">{link.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         {/* Bottom bar */}
         <div className="border-t border-background/10 pt-8 space-y-3">
-          <p className="text-background/50 text-xs">
-            © 2024 Localsurance. All rights are reserved by Localsurance. No part of this website or its content may be reproduced, distributed, or transmitted in any form or by any means without the prior written permission of Localsurance.
-          </p>
-          <p className="text-background/30 text-xs">
-            Localsurance is an insurance technology company based in California, US.
-          </p>
+          <p className="text-background/50 text-xs">{FOOTER_LEGAL.copyright}</p>
+          <p className="text-background/30 text-xs">{FOOTER_LEGAL.tagline}</p>
           <div className="flex flex-wrap gap-6 pt-1">
-            {["Terms of Service", "Privacy Policy", "Verify Our Licenses"].map((item) => (
-              <a key={item} href="#" className="text-background/60 hover:text-background text-xs transition-colors">{item}</a>
+            {FOOTER_LEGAL.links.map((item) => (
+              <a key={item.label} href={item.href} className="text-background/60 hover:text-background text-xs transition-colors">{item.label}</a>
             ))}
           </div>
         </div>

@@ -372,6 +372,53 @@ export const ROLES: { value: string; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+// ─── Footer ───────────────────────────────────────────────────────────────────
+export const FOOTER_CONTACT = {
+  mob: "+1 (000)-000-0000",
+  fax: "+1 (000)-000-0000",
+  tagline: "Best health insurance provider for remote teams.",
+};
+
+export const FOOTER_COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
+  {
+    heading: "We Build Our Product For:",
+    links: [
+      { label: "Employers",             href: "#" },
+      { label: "Employees",             href: "#" },
+      { label: "Insurance Providers",   href: "#" },
+      { label: "InsurTech Startups",    href: "#" },
+    ],
+  },
+  {
+    heading: "About Company",
+    links: [
+      { label: "Contact Us",      href: "#" },
+      { label: "Work with us",    href: "#" },
+      { label: "HR Information",  href: "#" },
+      { label: "Press Coverage",  href: "#" },
+    ],
+  },
+  {
+    heading: "Localsurance Academy",
+    links: [
+      { label: "For Employer",            href: "#" },
+      { label: "For Employee",            href: "#" },
+      { label: "For Insurance Providers", href: "#" },
+      { label: "Dashboard",               href: "/dashboard" },
+    ],
+  },
+];
+
+export const FOOTER_LEGAL = {
+  copyright: "© 2024 Localsurance. All rights are reserved by Localsurance. No part of this website or its content may be reproduced, distributed, or transmitted in any form or by any means without the prior written permission of Localsurance.",
+  tagline: "Localsurance is an insurance technology company based in California, US.",
+  links: [
+    { label: "Terms of Service",    href: "#" },
+    { label: "Privacy Policy",      href: "#" },
+    { label: "Verify Our Licenses", href: "#" },
+  ],
+};
+
 // ─── Helper: ISO 2-letter country code → flag emoji ───────────────────────────
 export function countryFlag(code: string): string {
   return code
