@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { sendEmail } from "@/lib/email";
+import { getEmployeeInviteTemplate } from "@/lib/email-templates";
+import crypto from "crypto";
 
 export async function GET(request: NextRequest) {
   try {
@@ -126,6 +129,40 @@ export async function POST(request: NextRequest) {
           })
       )
     );
+
+    // Generate onboarding tokens and send invitation emails
+    const adminUser = await prisma.user.findUnique({
+      where: { id: user.userId as string },
+    });
+
+    for (const emp of createdEmployees) {
+      const token = crypto.randomUUID();
+      const tokenExp = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+      await prisma.employee.update({
+        where: { id: emp.id },
+        data: { onboardingToken: token, onboardingTokenExp: tokenExp },
+      });
+
+      const onboardingUrl = `${process.env.NEXT_PUBLIC_APP_URL}/onboard/${token}`;
+
+      try {
+        await sendEmail({
+          to: emp.email,
+          subject: `You're invited to join ${company?.legalName || "your company"}'s health plan - Localsurance`,
+          html: getEmployeeInviteTemplate({
+            employeeName: emp.fullName,
+            companyName: company?.legalName || "Your Company",
+            adminName: `${adminUser?.firstName || ""} ${adminUser?.lastName || ""}`.trim(),
+            onboardingUrl,
+            personalizedMessage: emp.personalizedMessage || undefined,
+          }),
+        });
+        console.log(`[EMAIL] Onboarding invite sent to ${emp.email}`);
+      } catch (emailError) {
+        console.error(`[EMAIL] Failed to send invite to ${emp.email}:`, emailError);
+      }
+    }
 
     return NextResponse.json({ employees: createdEmployees }, { status: 201 });
   } catch (error) {

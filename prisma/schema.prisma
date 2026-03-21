@@ -125,6 +125,39 @@ model Employee {
   status              EmployeeStatus @default(PENDING)
   planStartDate       DateTime?      @map("plan_start_date")
   planEndDate         DateTime?      @map("plan_end_date")
+  onboardingToken     String?        @unique @map("onboarding_token")
+  onboardingTokenExp  DateTime?      @map("onboarding_token_exp")
+  onboardingComplete  Boolean        @default(false) @map("onboarding_complete")
+  passwordHash        String?        @map("password_hash")
+  // Personal details (filled during self-onboarding)
+  phone               String?
+  phoneType           String?        @map("phone_type")
+  gender              String?
+  dateOfBirth         DateTime?      @map("date_of_birth")
+  nationality         String?
+  height              String?
+  weight              String?
+  country             String?
+  state               String?
+  postalCode          String?        @map("postal_code")
+  occupation          String?
+  occupationIndustry  String?        @map("occupation_industry")
+  // Spouse
+  includeSpouse       Boolean?       @map("include_spouse")
+  spouseFirstName     String?        @map("spouse_first_name")
+  spouseLastName      String?        @map("spouse_last_name")
+  spousePreferredName String?        @map("spouse_preferred_name")
+  spouseGender        String?        @map("spouse_gender")
+  spouseDob           DateTime?      @map("spouse_dob")
+  spouseCountry       String?        @map("spouse_country")
+  spouseNationality   String?        @map("spouse_nationality")
+  spouseHeight        String?        @map("spouse_height")
+  spouseWeight        String?        @map("spouse_weight")
+  spouseOccupation    String?        @map("spouse_occupation")
+  spouseOccIndustry   String?        @map("spouse_occ_industry")
+  // Dependants stored as JSON array
+  includeDependant    Boolean?       @map("include_dependant")
+  dependantsData      Json?          @map("dependants_data")
   createdAt           DateTime       @default(now()) @map("created_at")
   updatedAt           DateTime       @updatedAt @map("updated_at")
 

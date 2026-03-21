@@ -66,6 +66,6 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/admin/:path*",
-    "/api/((?!auth/).*)",
+    "/api/((?!auth/|onboard/).*)",
   ],
 };
