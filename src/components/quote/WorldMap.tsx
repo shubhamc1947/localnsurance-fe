@@ -1,7 +1,81 @@
 "use client";
 
-import { useMemo } from "react";
-import { Check } from "lucide-react";
+import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
+import { useMemo, useCallback } from "react";
+
+const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+
+// ISO numeric country codes → region IDs
+const COUNTRY_REGION: Record<number, string> = {
+  // North/Central America
+  840: "north-central-america", 124: "north-central-america", 484: "north-central-america",
+  320: "north-central-america", 340: "north-central-america", 188: "north-central-america",
+  222: "north-central-america", 558: "north-central-america", 591: "north-central-america",
+  192: "north-central-america", 332: "north-central-america", 388: "north-central-america",
+  214: "north-central-america", 630: "north-central-america", 780: "north-central-america",
+  44: "north-central-america", 84: "north-central-america", 308: "north-central-america",
+  // South America
+  76: "south-america", 32: "south-america", 152: "south-america", 170: "south-america",
+  604: "south-america", 862: "south-america", 218: "south-america", 68: "south-america",
+  600: "south-america", 858: "south-america", 328: "south-america", 740: "south-america",
+  238: "south-america", 254: "south-america",
+  // Europe
+  276: "europe", 250: "europe", 380: "europe", 724: "europe", 620: "europe",
+  528: "europe", 56: "europe", 40: "europe", 756: "europe", 752: "europe",
+  578: "europe", 208: "europe", 246: "europe", 826: "europe", 372: "europe",
+  616: "europe", 203: "europe", 703: "europe", 348: "europe", 642: "europe",
+  100: "europe", 300: "europe", 191: "europe", 705: "europe", 233: "europe",
+  428: "europe", 440: "europe", 112: "europe", 498: "europe", 804: "europe",
+  688: "europe", 807: "europe", 8: "europe", 70: "europe", 499: "europe",
+  442: "europe", 352: "europe", 470: "europe", 492: "europe", 674: "europe",
+  // Middle East / Africa
+  818: "middle-east-africa", 504: "middle-east-africa", 788: "middle-east-africa",
+  12: "middle-east-africa", 434: "middle-east-africa", 736: "middle-east-africa",
+  706: "middle-east-africa", 231: "middle-east-africa", 566: "middle-east-africa",
+  288: "middle-east-africa", 384: "middle-east-africa", 854: "middle-east-africa",
+  466: "middle-east-africa", 562: "middle-east-africa", 682: "middle-east-africa",
+  784: "middle-east-africa", 368: "middle-east-africa", 364: "middle-east-africa",
+  400: "middle-east-africa", 760: "middle-east-africa", 422: "middle-east-africa",
+  376: "middle-east-africa", 275: "middle-east-africa", 887: "middle-east-africa",
+  512: "middle-east-africa", 404: "middle-east-africa", 800: "middle-east-africa",
+  834: "middle-east-africa", 508: "middle-east-africa", 716: "middle-east-africa",
+  710: "middle-east-africa", 516: "middle-east-africa", 140: "middle-east-africa",
+  120: "middle-east-africa", 24: "middle-east-africa", 180: "middle-east-africa",
+  686: "middle-east-africa", 324: "middle-east-africa", 694: "middle-east-africa",
+  430: "middle-east-africa", 204: "middle-east-africa", 768: "middle-east-africa",
+  266: "middle-east-africa", 678: "middle-east-africa", 174: "middle-east-africa",
+  72: "middle-east-africa", 426: "middle-east-africa", 748: "middle-east-africa",
+  454: "middle-east-africa", 646: "middle-east-africa", 108: "middle-east-africa",
+  // Asia Pacific
+  643: "asia-pacific", // Russia
+  156: "asia-pacific", 356: "asia-pacific", 392: "asia-pacific", 410: "asia-pacific",
+  360: "asia-pacific", 764: "asia-pacific", 704: "asia-pacific", 458: "asia-pacific",
+  608: "asia-pacific", 50: "asia-pacific", 144: "asia-pacific", 524: "asia-pacific",
+  64: "asia-pacific", 398: "asia-pacific", 417: "asia-pacific",
+  762: "asia-pacific", 795: "asia-pacific", 860: "asia-pacific", 4: "asia-pacific",
+  586: "asia-pacific", 408: "asia-pacific", 496: "asia-pacific", 36: "asia-pacific",
+  554: "asia-pacific", 598: "asia-pacific", 242: "asia-pacific", 90: "asia-pacific",
+  116: "asia-pacific", 418: "asia-pacific", 104: "asia-pacific",
+  96: "asia-pacific", 626: "asia-pacific", 16: "asia-pacific", 184: "asia-pacific",
+};
+
+// Region pill colors
+const REGION_COLORS: Record<string, { fill: string; hover: string; label: string; dot: string }> = {
+  "north-central-america": { fill: "#3B82F6", hover: "#2563EB", label: "#2563EB", dot: "#93C5FD" },
+  "south-america":         { fill: "#22C55E", hover: "#16A34A", label: "#16A34A", dot: "#86EFAC" },
+  "europe":                { fill: "#14B8A6", hover: "#0D9488", label: "#0D9488", dot: "#5EEAD4" },
+  "middle-east-africa":    { fill: "#F97316", hover: "#EA580C", label: "#EA580C", dot: "#FDBA74" },
+  "asia-pacific":          { fill: "#EF4444", hover: "#DC2626", label: "#DC2626", dot: "#FCA5A5" },
+};
+
+// Marker positions [lng, lat] + label pixel width
+const REGION_MARKERS: Record<string, { coords: [number, number]; labelWidth: number; pinCoords: [number, number] }> = {
+  "north-central-america": { coords: [-95, 48],  labelWidth: 154, pinCoords: [-100, 40] },
+  "south-america":         { coords: [-58, -14], labelWidth: 112, pinCoords: [-58, -18] },
+  "europe":                { coords: [18, 54],   labelWidth: 64,  pinCoords: [15, 50]   },
+  "middle-east-africa":    { coords: [28, 4],    labelWidth: 158, pinCoords: [25, 8]    },
+  "asia-pacific":          { coords: [118, 22],  labelWidth: 92,  pinCoords: [105, 30]  },
+};
 
 interface WorldMapProps {
   selectedRegions: string[];
@@ -9,135 +83,173 @@ interface WorldMapProps {
   regions: { id: string; label: string }[];
 }
 
-const REGION_COLORS: Record<string, string> = {
-  "north-central-america": "#3B82F6",
-  "south-america": "#8B5CF6",
-  "europe": "#10B981",
-  "middle-east-africa": "#F59E0B",
-  "asia-pacific": "#EF4444",
-};
-
-const REGION_POSITIONS: Record<string, { x: string; y: string }> = {
-  "north-central-america": { x: "20%", y: "30%" },
-  "south-america": { x: "28%", y: "72%" },
-  "europe": { x: "48%", y: "22%" },
-  "middle-east-africa": { x: "52%", y: "62%" },
-  "asia-pacific": { x: "78%", y: "40%" },
-};
-
-// Simplified continent outlines for a clean look
-const CONTINENT_PATHS = [
-  // North America
-  "M80,60 C100,45 150,40 190,50 C220,58 245,75 255,100 C262,120 258,145 245,165 C230,180 210,190 185,195 C165,198 145,195 130,188 C115,178 105,162 100,145 C95,125 92,105 85,85 Z",
-  // Central America
-  "M150,180 C160,178 172,185 178,198 C182,210 175,220 165,222 C155,220 148,210 148,198 C148,190 150,183 152,180 Z",
-  // South America
-  "M195,230 C215,222 240,228 255,245 C268,265 272,290 268,315 C264,338 255,355 242,365 C228,372 215,368 205,355 C195,340 190,320 192,298 C194,275 196,255 197,238 Z",
-  // Europe
-  "M410,55 C430,48 455,52 475,62 C492,72 502,88 505,108 C506,125 500,140 488,152 C475,160 458,162 442,158 C428,152 418,140 414,125 C410,108 410,90 412,72 Z",
-  // UK
-  "M400,65 C408,60 415,63 418,72 C420,80 416,88 410,90 C404,88 400,82 400,74 Z",
-  // Africa
-  "M430,168 C448,162 468,168 482,182 C495,198 502,220 505,245 C506,270 502,295 492,315 C480,332 465,342 448,345 C432,342 420,332 415,315 C410,295 412,272 418,248 C424,225 428,200 430,180 Z",
-  // Middle East
-  "M505,115 C520,110 538,118 548,132 C555,145 548,160 535,168 C520,172 508,165 502,152 C498,140 500,125 505,118 Z",
-  // Russia/Central Asia
-  "M460,42 C500,35 560,38 620,45 C670,52 710,62 740,78 C755,88 758,102 750,115 C738,128 718,132 695,130 C670,128 645,120 620,115 C595,110 570,108 548,105 C530,102 515,95 508,85 C500,72 495,58 470,50 Z",
-  // India
-  "M590,135 C605,130 620,138 628,155 C635,172 630,192 620,205 C610,215 598,210 592,195 C586,178 585,160 588,145 Z",
-  // Southeast Asia
-  "M640,165 C658,160 678,168 688,182 C695,195 688,205 675,208 C660,208 650,198 648,185 C646,175 648,168 642,168 Z",
-  // China/East Asia
-  "M620,60 C650,55 685,62 715,78 C735,90 745,108 740,125 C732,142 715,150 695,148 C675,145 658,138 642,128 C628,118 618,105 615,90 C612,78 616,65 622,60 Z",
-  // Japan
-  "M755,78 C762,72 770,78 772,90 C774,102 768,112 762,112 C756,108 754,98 755,88 Z",
-  // Indonesia
-  "M660,195 C678,190 700,198 718,208 C728,215 722,225 710,228 C695,228 678,222 668,212 C660,205 658,198 662,195 Z",
-  // Australia
-  "M705,265 C730,255 760,258 782,270 C798,282 802,300 795,318 C785,332 768,340 748,340 C728,338 712,328 705,312 C698,296 700,278 708,268 Z",
-  // New Zealand
-  "M808,320 C815,315 822,320 822,332 C820,340 815,342 810,338 C806,332 806,325 808,322 Z",
-];
-
 const WorldMap = ({ selectedRegions, onToggleRegion, regions }: WorldMapProps) => {
+  const getRegionId = useCallback((geoId: string) => {
+    const numericId = parseInt(geoId, 10);
+    return COUNTRY_REGION[numericId] ?? null;
+  }, []);
+
   const selectedSet = useMemo(() => new Set(selectedRegions), [selectedRegions]);
 
-  // Map region IDs to continent path indices
-  const regionPathIndices: Record<string, number[]> = {
-    "north-central-america": [0, 1],
-    "south-america": [2],
-    "europe": [3, 4],
-    "middle-east-africa": [5, 6],
-    "asia-pacific": [7, 8, 9, 10, 11, 12, 13, 14],
-  };
-
   return (
-    <div
-      className="relative w-full rounded-xl overflow-hidden select-none"
-      style={{ aspectRatio: "2.4/1", background: "linear-gradient(135deg, #F0F6FF 0%, #F8FAFF 100%)" }}
-    >
-      <svg
-        viewBox="0 0 900 380"
-        className="absolute inset-0 w-full h-full"
-        preserveAspectRatio="xMidYMid meet"
+    <div className="w-full space-y-0">
+      {/* Map */}
+      <div
+        className="relative w-full rounded-2xl overflow-hidden border border-border/50"
+        style={{ aspectRatio: "2/1", background: "#EFF6FF" }}
       >
-        {/* Render continents */}
-        {CONTINENT_PATHS.map((path, i) => {
-          // Find which region this path belongs to
-          let regionId: string | null = null;
-          let isSelected = false;
-          for (const [rId, indices] of Object.entries(regionPathIndices)) {
-            if (indices.includes(i)) {
-              regionId = rId;
-              isSelected = selectedSet.has(rId);
-              break;
+        <ComposableMap
+          projectionConfig={{ scale: 160, center: [20, 15] }}
+          style={{ width: "100%", height: "100%" }}
+        >
+          {/* SVG pattern definitions for the dotted effect */}
+          <defs>
+            {/* Default gray dot pattern */}
+            <pattern id="dots-default" width="4" height="4" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="0.8" fill="#94A3B8" opacity="0.5" />
+            </pattern>
+            {/* Colored dot patterns for each region */}
+            {Object.entries(REGION_COLORS).map(([regionId, colors]) => (
+              <pattern key={regionId} id={`dots-${regionId}`} width="4" height="4" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="0.9" fill={colors.fill} opacity="0.7" />
+              </pattern>
+            ))}
+          </defs>
+
+          <Geographies geography={GEO_URL}>
+            {({ geographies }) =>
+              geographies
+              .filter((geo) => geo.id !== "010") // remove Antarctica
+              .map((geo) => {
+                const regionId = getRegionId(geo.id);
+                const isSelected = regionId ? selectedSet.has(regionId) : false;
+
+                return (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    onClick={() => regionId && onToggleRegion(regionId)}
+                    style={{
+                      default: {
+                        fill: isSelected
+                          ? `url(#dots-${regionId})`
+                          : "url(#dots-default)",
+                        stroke: "none",
+                        outline: "none",
+                        cursor: regionId ? "pointer" : "default",
+                      },
+                      hover: {
+                        fill: isSelected
+                          ? `url(#dots-${regionId})`
+                          : regionId ? "url(#dots-default)" : "url(#dots-default)",
+                        stroke: "none",
+                        outline: "none",
+                        cursor: regionId ? "pointer" : "default",
+                        opacity: regionId ? 0.8 : 1,
+                      },
+                      pressed: {
+                        fill: isSelected
+                          ? `url(#dots-${regionId})`
+                          : "url(#dots-default)",
+                        outline: "none",
+                      },
+                    }}
+                  />
+                );
+              })
             }
-          }
-          const color = regionId ? REGION_COLORS[regionId] : "#CBD5E1";
-          return (
-            <path
-              key={i}
-              d={path}
-              fill={isSelected ? color : "#CBD5E1"}
-              opacity={isSelected ? 0.3 : 0.15}
-              stroke={isSelected ? color : "#94A3B8"}
-              strokeWidth={isSelected ? 1 : 0.5}
-              strokeOpacity={isSelected ? 0.5 : 0.2}
-              className="transition-all duration-300"
-              style={{ cursor: regionId ? "pointer" : "default" }}
-              onClick={() => regionId && onToggleRegion(regionId)}
-            />
-          );
-        })}
-      </svg>
+          </Geographies>
 
-      {/* Region labels */}
-      {regions.map((region) => {
-        const pos = REGION_POSITIONS[region.id];
-        if (!pos) return null;
-        const isSelected = selectedSet.has(region.id);
-        const color = REGION_COLORS[region.id] || "#1E293B";
+          {/* Location pins for selected regions */}
+          {regions.map((region) => {
+            const marker = REGION_MARKERS[region.id];
+            const isSelected = selectedSet.has(region.id);
+            const colors = REGION_COLORS[region.id];
+            if (!marker || !isSelected) return null;
 
-        return (
-          <button
-            key={region.id}
-            onClick={() => onToggleRegion(region.id)}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105 z-10"
-            style={{ left: pos.x, top: pos.y }}
-          >
-            <div
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold shadow-sm whitespace-nowrap transition-all"
-              style={{
-                background: isSelected ? color : "#1E293B",
-                color: "white",
-              }}
-            >
-              {region.label}
-              {isSelected && <Check className="w-3 h-3" />}
-            </div>
-          </button>
-        );
-      })}
+            return (
+              <Marker key={`pin-${region.id}`} coordinates={marker.pinCoords}>
+                <g transform="translate(-8, -24)">
+                  {/* Pin shadow */}
+                  <ellipse cx="8" cy="25" rx="4" ry="1.5" fill="rgba(0,0,0,0.15)" />
+                  {/* Pin body */}
+                  <path
+                    d="M8 0C3.58 0 0 3.58 0 8c0 5.5 8 16 8 16s8-10.5 8-16c0-4.42-3.58-8-8-8z"
+                    fill={colors.fill}
+                  />
+                  {/* Pin inner circle */}
+                  <circle cx="8" cy="8" r="3" fill="white" />
+                </g>
+              </Marker>
+            );
+          })}
+
+          {/* Region pill labels */}
+          {regions.map((region) => {
+            const marker = REGION_MARKERS[region.id];
+            const isSelected = selectedSet.has(region.id);
+            const colors = REGION_COLORS[region.id];
+            if (!marker) return null;
+
+            const { coords, labelWidth } = marker;
+            const pillH = 22;
+            const halfW = labelWidth / 2;
+
+            return (
+              <Marker key={region.id} coordinates={coords}>
+                <g
+                  onClick={(e) => { e.stopPropagation(); onToggleRegion(region.id); }}
+                  style={{ cursor: "pointer" }}
+                  transform={`translate(${-halfW}, ${-pillH / 2})`}
+                >
+                  {/* Shadow */}
+                  <rect
+                    x={1} y={2}
+                    width={labelWidth} height={pillH}
+                    rx={pillH / 2}
+                    fill="rgba(0,0,0,0.1)"
+                  />
+                  {/* Pill background */}
+                  <rect
+                    x={0} y={0}
+                    width={labelWidth} height={pillH}
+                    rx={pillH / 2}
+                    fill={isSelected ? colors.label : "#1E293B"}
+                  />
+                  {/* Label text */}
+                  <text
+                    x={isSelected ? labelWidth / 2 - 6 : labelWidth / 2}
+                    y={15}
+                    textAnchor="middle"
+                    fill="white"
+                    fontSize={9.5}
+                    fontFamily="system-ui, sans-serif"
+                    fontWeight="600"
+                    letterSpacing="0.3"
+                    style={{ pointerEvents: "none", userSelect: "none" }}
+                  >
+                    {region.label}
+                  </text>
+                  {/* Checkmark when selected */}
+                  {isSelected && (
+                    <text
+                      x={labelWidth - 14}
+                      y={15}
+                      fill="white"
+                      fontSize={9}
+                      fontWeight="bold"
+                      style={{ pointerEvents: "none", userSelect: "none" }}
+                    >
+                      ✓
+                    </text>
+                  )}
+                </g>
+              </Marker>
+            );
+          })}
+        </ComposableMap>
+      </div>
+
     </div>
   );
 };
