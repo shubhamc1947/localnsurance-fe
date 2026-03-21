@@ -9,6 +9,7 @@ import {
   FileText,
   CreditCard,
   MessageCircleQuestion,
+  MessageSquare,
   MoreHorizontal,
   LogOut,
 } from "lucide-react";
@@ -36,6 +37,7 @@ const navItems = [
   { title: "Quotes", url: "/admin/quotes", icon: FileText },
   { title: "Payments", url: "/admin/payments", icon: CreditCard },
   { title: "Support Tickets", url: "/admin/support", icon: MessageCircleQuestion },
+  { title: "Contact Queries", url: "/admin/queries", icon: MessageSquare },
 ];
 
 export default function AdminSidebar() {

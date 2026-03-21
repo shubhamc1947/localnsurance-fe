@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Filter, ArrowDownUp, MoreHorizontal, Copy, ArrowDown, X, Info, Eye, RefreshCw, Mail, Ban } from "lucide-react";
+import { Search, Filter, ArrowDownUp, MoreHorizontal, Copy, ArrowDown, X, Info, Eye, RefreshCw, Mail, Ban, UserPlus, Loader2, Send } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 type MemberStatus = "ACTIVE" | "PENDING" | "CANCELED";
 
@@ -47,6 +49,7 @@ const statusColors: Record<MemberStatus, string> = {
 export default function MembersOverview() {
   const { user } = useAuth();
   const companyId = (user?.companies?.[0] as { id: string } | undefined)?.id;
+  const queryClient = useQueryClient();
 
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,6 +57,12 @@ export default function MembersOverview() {
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Add New Member dialog state
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberMessage, setNewMemberMessage] = useState("");
 
   const isEmployee = !companyId;
 
@@ -73,6 +82,56 @@ export default function MembersOverview() {
     enabled: !!user,
   });
 
+  // Add single employee mutation
+  const addMemberMutation = useMutation({
+    mutationFn: async (data: { fullName: string; email: string; personalizedMessage?: string }) => {
+      const res = await fetch("/api/employees/add-single", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to add member");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Invite sent successfully!");
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      setAddMemberOpen(false);
+      setNewMemberName("");
+      setNewMemberEmail("");
+      setNewMemberMessage("");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to add member");
+    },
+  });
+
+  // Resend invite mutation
+  const resendInviteMutation = useMutation({
+    mutationFn: async (employeeId: string) => {
+      const res = await fetch("/api/employees/resend-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeId }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to resend invite");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Invite email resent successfully!");
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to resend invite");
+    },
+  });
+
   const members: Member[] = (data?.employees || []).map(mapEmployeeToMember);
   const totalPages = data?.totalPages || 1;
 
@@ -86,6 +145,18 @@ export default function MembersOverview() {
     setSelectedMembers((prev) =>
       prev.length === members.length ? [] : members.map((m) => m.id)
     );
+  };
+
+  const handleAddMember = () => {
+    if (!newMemberName.trim() || !newMemberEmail.trim()) {
+      toast.error("Name and email are required");
+      return;
+    }
+    addMemberMutation.mutate({
+      fullName: newMemberName.trim(),
+      email: newMemberEmail.trim(),
+      personalizedMessage: newMemberMessage.trim() || undefined,
+    });
   };
 
   return (
@@ -147,10 +218,69 @@ export default function MembersOverview() {
             <MoreHorizontal className="w-4 h-4" />
           </button>
         </div>
-        <button className="bg-accent text-accent-foreground px-6 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity">
+        <button
+          onClick={() => setAddMemberOpen(true)}
+          className="bg-accent text-accent-foreground px-6 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+        >
+          <UserPlus className="w-4 h-4" />
           Add New Member
         </button>
       </div>
+
+      {/* Add New Member Dialog */}
+      <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Member</DialogTitle>
+            <DialogDescription>
+              Send an onboarding invite to a new team member.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Full Name</label>
+              <input
+                type="text"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+                placeholder="John Doe"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
+              <input
+                type="email"
+                value={newMemberEmail}
+                onChange={(e) => setNewMemberEmail(e.target.value)}
+                placeholder="john@example.com"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Personalized Message <span className="text-muted-foreground font-normal">(optional)</span></label>
+              <textarea
+                value={newMemberMessage}
+                onChange={(e) => setNewMemberMessage(e.target.value)}
+                placeholder="Welcome to the team! Please complete your onboarding..."
+                rows={3}
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+            </div>
+            <button
+              onClick={handleAddMember}
+              disabled={addMemberMutation.isPending}
+              className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {addMemberMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>
+              ) : (
+                <><Send className="w-4 h-4" /> Send Invite</>
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Table */}
       <div className="bg-background rounded-xl border border-border overflow-hidden">
@@ -285,6 +415,18 @@ export default function MembersOverview() {
                       <button className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-primary">
                         <RefreshCw className="w-4 h-4" /> Request An Update
                       </button>
+                      {member.status === "PENDING" && (
+                        <button
+                          onClick={() => {
+                            resendInviteMutation.mutate(member.id);
+                            setActionMenuOpen(null);
+                          }}
+                          disabled={resendInviteMutation.isPending}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-primary disabled:opacity-50"
+                        >
+                          <Mail className="w-4 h-4" /> Resend Invite
+                        </button>
+                      )}
                       <button className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-primary">
                         <Mail className="w-4 h-4" /> Send Remainder
                       </button>

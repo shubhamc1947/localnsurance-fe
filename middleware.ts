@@ -67,6 +67,6 @@ export const config = {
     "/dashboard/:path*",
     "/admin/:path*",
     "/profile/:path*",
-    "/api/((?!auth/|onboard/).*)",
+    "/api/((?!auth/|onboard/|contact).*)",
   ],
 };

@@ -314,6 +314,21 @@ model SupportTicket {
   @@map("support_tickets")
 }
 
+model ContactQuery {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  bestTime  String?  @map("best_time")
+  message   String?
+  status    String   @default("NEW")
+  response  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("contact_queries")
+}
+
 model OtpCode {
   id        String   @id @default(cuid())
   email     String

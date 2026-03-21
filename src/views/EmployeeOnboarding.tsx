@@ -139,7 +139,9 @@ export default function EmployeeOnboarding({ token }: EmployeeOnboardingProps) {
 
   return (
     <div className="flex min-h-screen bg-muted/20">
-      <OnboardingSidebar />
+      <div className="hidden lg:block w-[320px] shrink-0">
+        <OnboardingSidebar />
+      </div>
       <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

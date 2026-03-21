@@ -1,6 +1,22 @@
 "use client";
 
-import { MessageCircle, Mail, Twitter, Phone } from "lucide-react";
+import { useState } from "react";
+import { MessageCircle, Mail, Twitter, Phone, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 const socials = [
   { name: "Facebook", path: "M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078V12h3.047V9.356c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.875V12h3.328l-.532 3.469h-2.796v8.385C19.612 22.954 24 17.99 24 12z" },
@@ -11,6 +27,53 @@ const socials = [
 ];
 
 const OnboardingSidebar = () => {
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactBestTime, setContactBestTime] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleContactSubmit = async () => {
+    if (!contactName.trim() || !contactEmail.trim()) {
+      toast.error("Name and email are required");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: contactName.trim(),
+          email: contactEmail.trim(),
+          phone: contactPhone.trim() || undefined,
+          bestTime: contactBestTime || undefined,
+          message: contactMessage.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to submit");
+      }
+
+      toast.success("We'll get back to you soon!");
+      setContactOpen(false);
+      setContactName("");
+      setContactEmail("");
+      setContactPhone("");
+      setContactBestTime("");
+      setContactMessage("");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to submit query");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="relative w-full h-full  rounded-2xl overflow-hidden flex flex-col justify-between p-8"
       style={{
@@ -44,7 +107,7 @@ const OnboardingSidebar = () => {
               <path d="M198.967 25.48V15.7387C198.967 14.56 198.846 13.5084 198.604 12.584C198.374 11.6596 198.016 10.8738 197.532 10.2267C197.059 9.57956 196.46 9.08844 195.733 8.75333C195.019 8.41822 194.171 8.25067 193.191 8.25067C192.177 8.25067 191.295 8.42978 190.545 8.788C189.808 9.13467 189.196 9.62578 188.712 10.2613C188.24 10.8969 187.882 11.6538 187.64 12.532C187.409 13.3987 187.294 14.3462 187.294 15.3747L185.72 15.184C185.72 13.1618 186.061 11.4978 186.741 10.192C187.433 8.87467 188.361 7.904 189.525 7.28C190.689 6.64444 191.998 6.32667 193.451 6.32667C194.477 6.32667 195.393 6.47689 196.2 6.77733C197.019 7.07778 197.728 7.50533 198.327 8.06C198.927 8.60311 199.423 9.25022 199.815 10.0013C200.207 10.7409 200.495 11.5556 200.679 12.4453C200.875 13.3351 200.973 14.2653 200.973 15.236V25.48H198.967ZM185.288 25.48V6.76H187.104V10.972H187.294V25.48H185.288Z" fill="#0066FF"/>
               <path d="M213.012 26C211.144 26 209.57 25.584 208.29 24.752C207.011 23.9084 206.037 22.7471 205.368 21.268C204.711 19.7773 204.371 18.0613 204.348 16.12C204.371 14.144 204.716 12.4164 205.385 10.9373C206.065 9.44667 207.045 8.29111 208.325 7.47067C209.605 6.65022 211.173 6.24 213.029 6.24C214.839 6.24 216.43 6.67911 217.802 7.55733C219.185 8.424 220.142 9.62 220.673 11.1453L218.736 11.856C218.263 10.6889 217.52 9.78756 216.505 9.152C215.49 8.50489 214.326 8.18133 213.012 8.18133C211.536 8.18133 210.32 8.52222 209.363 9.204C208.406 9.87422 207.691 10.8044 207.218 11.9947C206.746 13.1849 206.498 14.56 206.475 16.12C206.509 18.512 207.068 20.436 208.152 21.892C209.247 23.3364 210.867 24.0587 213.012 24.0587C214.338 24.0587 215.485 23.7524 216.453 23.14C217.433 22.5276 218.182 21.6378 218.701 20.4707L220.673 21.1467C219.946 22.7298 218.932 23.9373 217.629 24.7693C216.326 25.5898 214.787 26 213.012 26Z" fill="#0066FF"/>
               <path d="M231.489 26C229.702 26 228.157 25.6013 226.854 24.804C225.552 23.9951 224.543 22.8569 223.828 21.3893C223.113 19.9102 222.756 18.1653 222.756 16.1547C222.756 14.1093 223.107 12.3471 223.811 10.868C224.525 9.37733 225.529 8.23333 226.82 7.436C228.123 6.63867 229.667 6.24 231.454 6.24C233.265 6.24 234.809 6.656 236.089 7.488C237.38 8.30844 238.36 9.49867 239.029 11.0587C239.709 12.6187 240.032 14.4964 239.997 16.692H237.922V15.9987C237.865 13.4333 237.288 11.4804 236.193 10.14C235.098 8.79955 233.53 8.12933 231.489 8.12933C229.379 8.12933 227.748 8.82844 226.595 10.2267C225.454 11.6133 224.883 13.5778 224.883 16.12C224.883 18.6391 225.454 20.592 226.595 21.9787C227.748 23.3653 229.368 24.0587 231.454 24.0587C232.896 24.0587 234.152 23.7236 235.224 23.0533C236.308 22.3716 237.167 21.4009 237.801 20.1413L239.6 20.9387C238.85 22.5564 237.767 23.8044 236.349 24.6827C234.93 25.5609 233.311 26 231.489 26ZM224.122 16.692V14.8893H238.873V16.692H224.122Z" fill="#0066FF"/>
-            </svg>            
+            </svg>
           </a>
         </div>
 
@@ -55,9 +118,12 @@ const OnboardingSidebar = () => {
             Speak to our friendly team via live chat
           </p>
           <div className="space-y-3">
-            <a href="#" className="flex items-center gap-3 text-primary-foreground text-sm hover:underline">
+            <button
+              onClick={() => setContactOpen(true)}
+              className="flex items-center gap-3 text-primary-foreground text-sm hover:underline"
+            >
               <MessageCircle className="w-4 h-4" /> Start a live chat
-            </a>
+            </button>
             <a href="#" className="flex items-center gap-3 text-primary-foreground text-sm hover:underline">
               <Mail className="w-4 h-4" /> Shoot us an email
             </a>
@@ -78,6 +144,85 @@ const OnboardingSidebar = () => {
           </a>
         </div>
       </div>
+
+      {/* Contact Query Dialog */}
+      <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Have a question? Let us know!</DialogTitle>
+            <DialogDescription>
+              Fill out the form below and we will get back to you as soon as possible.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Name</label>
+              <input
+                type="text"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                placeholder="Your name"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
+              <input
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Phone number <span className="text-muted-foreground font-normal">(optional)</span></label>
+              <input
+                type="tel"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                placeholder="+1 (555) 000-0000"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Best time to contact</label>
+              <Select value={contactBestTime} onValueChange={setContactBestTime}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Morning">Morning</SelectItem>
+                  <SelectItem value="Afternoon">Afternoon</SelectItem>
+                  <SelectItem value="Evening">Evening</SelectItem>
+                  <SelectItem value="Anytime">Anytime</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Message <span className="text-muted-foreground font-normal">(optional)</span></label>
+              <textarea
+                value={contactMessage}
+                onChange={(e) => setContactMessage(e.target.value)}
+                placeholder="Tell us how we can help..."
+                rows={3}
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+            </div>
+            <button
+              onClick={handleContactSubmit}
+              disabled={isSubmitting}
+              className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+              ) : (
+                "Submit"
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Social icons */}
       <div className="relative z-10 flex items-center gap-4 mt-8">

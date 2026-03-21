@@ -13,6 +13,7 @@ async function main() {
     prisma.planholderInfo.deleteMany(),
     prisma.parentInfo.deleteMany(),
     prisma.supportTicket.deleteMany(),
+    prisma.contactQuery.deleteMany(),
     prisma.otpCode.deleteMany(),
     prisma.invoice.deleteMany(),
     prisma.payment.deleteMany(),
