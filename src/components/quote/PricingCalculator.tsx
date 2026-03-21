@@ -237,6 +237,7 @@ const PricingCalculator = () => {
                   </div>
                   <span className="text-muted-foreground text-sm">(By age)</span>
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Enter the number of employees in each age group across all regions</p>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {data.ageGroups.map((group, i) => {
@@ -381,6 +382,33 @@ const PricingCalculator = () => {
                   </Popover>
                 ))}
               </div>
+
+              {data.selectedPlan && data.selectedRegions.length > 0 && totalMembers > 0 && (
+                <div className="mt-4 bg-muted/30 rounded-xl p-3">
+                  <h4 className="text-xs font-semibold text-foreground mb-2">Cost Breakdown by Region</h4>
+                  {data.selectedRegions.map((regionId) => {
+                    const region = regions.find(r => r.id === regionId);
+                    let regionCost = 0;
+                    for (const group of data.ageGroups) {
+                      if (group.count > 0) {
+                        const rate = getMemberRate(group.range as AgeBand, [regionId], data.selectedPlan);
+                        regionCost += group.count * rate;
+                      }
+                    }
+                    const perMember = totalMembers > 0 ? Math.round(regionCost / totalMembers) : 0;
+                    return (
+                      <div key={regionId} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                        <span className="text-xs text-muted-foreground">{region?.label}</span>
+                        <span className="text-xs font-semibold text-foreground">{formatCurrency(perMember)}/member</span>
+                      </div>
+                    );
+                  })}
+                  <div className="flex items-center justify-between pt-2 mt-1 border-t border-border">
+                    <span className="text-xs font-bold text-foreground">Average (blended)</span>
+                    <span className="text-xs font-bold text-accent">{formatCurrency(costPerMember)}/member</span>
+                  </div>
+                </div>
+              )}
             </div>
           </AnimatedSection>
         </div>

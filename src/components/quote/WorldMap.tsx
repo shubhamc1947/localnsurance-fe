@@ -2,7 +2,6 @@
 
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 import { useMemo, useCallback } from "react";
-import { Check } from "lucide-react";
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -93,14 +92,14 @@ const WorldMap = ({ selectedRegions, onToggleRegion, regions }: WorldMapProps) =
   const selectedSet = useMemo(() => new Set(selectedRegions), [selectedRegions]);
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-0">
       {/* Map */}
       <div
         className="relative w-full rounded-2xl overflow-hidden border border-border/50"
-        style={{ aspectRatio: "16/9", background: "#EFF6FF" }}
+        style={{ aspectRatio: "2/1", background: "#EFF6FF" }}
       >
         <ComposableMap
-          projectionConfig={{ scale: 195, center: [20, 10] }}
+          projectionConfig={{ scale: 160, center: [20, 15] }}
           style={{ width: "100%", height: "100%" }}
         >
           {/* SVG pattern definitions for the dotted effect */}
@@ -251,36 +250,6 @@ const WorldMap = ({ selectedRegions, onToggleRegion, regions }: WorldMapProps) =
         </ComposableMap>
       </div>
 
-      {/* Region chips legend */}
-      <div className="flex flex-wrap gap-2 px-1">
-        {regions.map((region) => {
-          const isSelected = selectedSet.has(region.id);
-          const colors = REGION_COLORS[region.id];
-          return (
-            <button
-              key={region.id}
-              onClick={() => onToggleRegion(region.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150"
-              style={
-                isSelected
-                  ? { background: colors.fill, color: "#fff", borderColor: colors.fill }
-                  : { background: "#F8FAFC", color: "#64748B", borderColor: "#E2E8F0" }
-              }
-            >
-              {isSelected && <Check className="w-3 h-3" />}
-              {region.label}
-            </button>
-          );
-        })}
-        {selectedRegions.length > 0 && (
-          <button
-            onClick={() => selectedRegions.forEach(r => onToggleRegion(r))}
-            className="px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-foreground transition-all"
-          >
-            Clear all
-          </button>
-        )}
-      </div>
     </div>
   );
 };
