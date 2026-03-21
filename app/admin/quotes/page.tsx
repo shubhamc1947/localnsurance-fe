@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Loader2, FileText } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Search, Loader2, FileText, CheckCircle2, XCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 interface Quote {
   id: string;
@@ -49,6 +50,7 @@ const statusColor = (status: string) => {
 };
 
 export default function AdminQuotesPage() {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
@@ -68,12 +70,42 @@ export default function AdminQuotesPage() {
     },
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const res = await fetch(`/api/admin/quotes/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to update quote");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Quote status updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-quotes"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update quote status");
+    },
+  });
+
   const quotes = data?.quotes ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setCurrentPage(1);
+  };
+
+  const handleApprove = (quoteId: string) => {
+    updateStatusMutation.mutate({ id: quoteId, status: "ACTIVE" });
+  };
+
+  const handleExpire = (quoteId: string) => {
+    updateStatusMutation.mutate({ id: quoteId, status: "EXPIRED" });
   };
 
   return (
@@ -141,13 +173,14 @@ export default function AdminQuotesPage() {
                       <TableHead>Cost</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {quotes.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={8}
+                          colSpan={9}
                           className="text-center text-sm text-muted-foreground py-12"
                         >
                           No quotes found.
@@ -157,7 +190,7 @@ export default function AdminQuotesPage() {
                       quotes.map((quote) => (
                         <TableRow
                           key={quote.id}
-                          className="hover:bg-secondary/30 cursor-pointer"
+                          className="hover:bg-secondary/30"
                         >
                           <TableCell className="font-mono text-sm text-muted-foreground">
                             #{quote.id.slice(0, 8)}
@@ -187,6 +220,33 @@ export default function AdminQuotesPage() {
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             {new Date(quote.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {quote.status === "SUBMITTED" && (
+                                <button
+                                  onClick={() => handleApprove(quote.id)}
+                                  disabled={updateStatusMutation.isPending}
+                                  className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md px-2.5 py-1.5 hover:bg-green-100 transition-colors disabled:opacity-50"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Approve
+                                </button>
+                              )}
+                              {quote.status === "ACTIVE" && (
+                                <button
+                                  onClick={() => handleExpire(quote.id)}
+                                  disabled={updateStatusMutation.isPending}
+                                  className="flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-md px-2.5 py-1.5 hover:bg-red-100 transition-colors disabled:opacity-50"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  Expire
+                                </button>
+                              )}
+                              {(quote.status === "DRAFT" || quote.status === "EXPIRED") && (
+                                <span className="text-xs text-muted-foreground">--</span>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))

@@ -19,6 +19,7 @@ interface SupportTicket {
   urgent: boolean;
   category: string;
   message: string;
+  response: string | null;
   status: string;
   createdAt: string;
 }
@@ -196,24 +197,32 @@ export default function Support() {
         ) : (
           <div className="space-y-3">
             {tickets.map((ticket) => (
-              <div key={ticket.id} className="bg-secondary/30 rounded-xl p-4 flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-foreground">{ticket.category}</span>
-                    {ticket.urgent && (
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-200">
-                        Urgent
+              <div key={ticket.id} className="bg-secondary/30 rounded-xl p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-foreground">{ticket.category}</span>
+                      {ticket.urgent && (
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-200">
+                          Urgent
+                        </span>
+                      )}
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${statusColor(ticket.status)}`}>
+                        {ticket.status}
                       </span>
-                    )}
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${statusColor(ticket.status)}`}>
-                      {ticket.status}
-                    </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{ticket.message}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{ticket.message}</p>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(ticket.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {new Date(ticket.createdAt).toLocaleDateString()}
-                </span>
+                {ticket.response && (
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-blue-700 mb-1">Reply from support:</p>
+                    <p className="text-sm text-blue-900">{ticket.response}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

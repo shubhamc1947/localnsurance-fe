@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, MessageSquare, Send } from "lucide-react";
+import { Loader2, MessageSquare, Send, Phone, CheckCircle2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -52,6 +52,8 @@ const statusColor = (status: string) => {
   switch ((status || "").toUpperCase()) {
     case "NEW":
       return "bg-blue-50 text-blue-700 border-blue-200";
+    case "CONTACTED":
+      return "bg-yellow-50 text-yellow-700 border-yellow-200";
     case "IN_PROGRESS":
       return "bg-orange-50 text-orange-600 border-orange-200";
     case "RESOLVED":
@@ -68,7 +70,7 @@ export default function AdminQueriesPage() {
   const [respondDialogOpen, setRespondDialogOpen] = useState(false);
   const [selectedQuery, setSelectedQuery] = useState<ContactQuery | null>(null);
   const [responseText, setResponseText] = useState("");
-  const [responseStatus, setResponseStatus] = useState("IN_PROGRESS");
+  const [responseStatus, setResponseStatus] = useState("CONTACTED");
 
   const { data, isLoading } = useQuery<QueriesResponse>({
     queryKey: ["admin-contact-queries", currentPage, statusFilter],
@@ -115,7 +117,7 @@ export default function AdminQueriesPage() {
   const handleRespond = (query: ContactQuery) => {
     setSelectedQuery(query);
     setResponseText(query.response || "");
-    setResponseStatus(query.status === "NEW" ? "IN_PROGRESS" : query.status);
+    setResponseStatus(query.status === "NEW" ? "CONTACTED" : query.status);
     setRespondDialogOpen(true);
   };
 
@@ -126,6 +128,10 @@ export default function AdminQueriesPage() {
       status: responseStatus,
       response: responseText.trim() || undefined,
     });
+  };
+
+  const handleQuickStatus = (queryId: string, status: string) => {
+    updateMutation.mutate({ id: queryId, status });
   };
 
   return (
@@ -152,7 +158,7 @@ export default function AdminQueriesPage() {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="NEW">New</SelectItem>
-            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="CONTACTED">Contacted</SelectItem>
             <SelectItem value="RESOLVED">Resolved</SelectItem>
           </SelectContent>
         </Select>
@@ -227,12 +233,32 @@ export default function AdminQueriesPage() {
                         {new Date(query.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <button
-                          onClick={() => handleRespond(query)}
-                          className="flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
-                        >
-                          <Send className="w-3.5 h-3.5" /> Respond
-                        </button>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <button
+                            onClick={() => handleRespond(query)}
+                            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                          >
+                            <Send className="w-3 h-3" /> Respond
+                          </button>
+                          {query.status === "NEW" && (
+                            <button
+                              onClick={() => handleQuickStatus(query.id, "CONTACTED")}
+                              disabled={updateMutation.isPending}
+                              className="flex items-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md px-2 py-1 hover:bg-yellow-100 transition-colors disabled:opacity-50"
+                            >
+                              <Phone className="w-3 h-3" /> Contacted
+                            </button>
+                          )}
+                          {(query.status === "NEW" || query.status === "CONTACTED" || query.status === "IN_PROGRESS") && (
+                            <button
+                              onClick={() => handleQuickStatus(query.id, "RESOLVED")}
+                              disabled={updateMutation.isPending}
+                              className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md px-2 py-1 hover:bg-green-100 transition-colors disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="w-3 h-3" /> Resolved
+                            </button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -268,7 +294,7 @@ export default function AdminQueriesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="NEW">New</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                    <SelectItem value="CONTACTED">Contacted</SelectItem>
                     <SelectItem value="RESOLVED">Resolved</SelectItem>
                   </SelectContent>
                 </Select>
