@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuote } from "@/contexts/QuoteContext";
-import { STEPS } from "@/constants/onboarding-steps";
+import { STEPS, getNextAfterParents } from "@/constants/onboarding-steps";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,68 +16,84 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
 
-const StepPlanholderInfo = () => {
+const StepParentsDetails = () => {
   const { data, updateData, setCurrentStep } = useQuote();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Local form state for planholder fields
-  const [firstName, setFirstName] = useState(data.firstName);
-  const [lastName, setLastName] = useState(data.lastName);
-  const [email, setEmail] = useState(data.email);
-  const [phCountry, setPhCountry] = useState(data.country);
-  const [phState, setPhState] = useState(data.state);
-  const [phPostalCode, setPhPostalCode] = useState(data.postalCode);
-  const [phone, setPhone] = useState(data.phone);
-  const [phoneType, setPhoneType] = useState(data.planholderPhoneType || "mobile");
-  const [gender, setGender] = useState(data.planholderGender);
-  const [dob, setDob] = useState(data.planholderDob);
-  const [nationality, setNationality] = useState(data.planholderNationality);
-  const [height, setHeight] = useState(data.planholderHeight);
-  const [weight, setWeight] = useState(data.planholderWeight);
+  // Parent form state
+  const [firstName, setFirstName] = useState(data.parentFirstName);
+  const [lastName, setLastName] = useState(data.parentLastName);
+  const [preferredName, setPreferredName] = useState(data.parentPreferredName);
+  const [country, setCountry] = useState(data.parentCountry);
+  const [state, setState] = useState(data.parentState);
+  const [postalCode, setPostalCode] = useState(data.parentPostalCode);
+  const [relationship, setRelationship] = useState(data.parentRelationship);
+  const [occupation, setOccupation] = useState(data.parentOccupation);
+  const [gender, setGender] = useState(data.parentGender);
+  const [height, setHeight] = useState(data.parentHeight);
+  const [weight, setWeight] = useState(data.parentWeight);
+  const [nationality, setNationality] = useState(data.parentNationality);
+  const [dob, setDob] = useState(data.parentDob);
 
-  const stateOptions = STATES_BY_COUNTRY[phCountry] || [];
+  const stateOptions = STATES_BY_COUNTRY[country] || [];
+
+  const handleBack = () => {
+    if (data.includeSpouse === true) {
+      setCurrentStep(STEPS.SPOUSE);
+    } else {
+      setCurrentStep(STEPS.FAMILY_QUESTIONS);
+    }
+  };
 
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/planholder", {
+      const res = await fetch("/api/parents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           quoteId: data.quoteId,
           firstName,
           lastName,
-          email,
-          country: phCountry,
-          state: phState,
-          postalCode: phPostalCode,
-          phone,
-          phoneType,
+          preferredName,
+          country,
+          state,
+          postalCode,
           gender,
           dob,
           nationality,
           height,
           weight,
+          relationship,
+          occupation,
         }),
       });
       const json = await res.json();
       if (!res.ok) {
-        throw new Error(json.error || "Failed to save planholder info");
+        throw new Error(json.error || "Failed to save parent details");
       }
 
       updateData({
-        planholderGender: gender,
-        planholderDob: dob,
-        planholderNationality: nationality,
-        planholderHeight: height,
-        planholderWeight: weight,
-        planholderPhoneType: phoneType,
+        parentFirstName: firstName,
+        parentLastName: lastName,
+        parentPreferredName: preferredName,
+        parentCountry: country,
+        parentState: state,
+        parentPostalCode: postalCode,
+        parentGender: gender,
+        parentDob: dob,
+        parentNationality: nationality,
+        parentHeight: height,
+        parentWeight: weight,
+        parentRelationship: relationship,
+        parentOccupation: occupation,
       });
 
-      setCurrentStep(STEPS.FAMILY_QUESTIONS);
+      const nextStep = getNextAfterParents(data.includeDependant === true);
+      setCurrentStep(nextStep);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to save planholder info";
+        err instanceof Error ? err.message : "Failed to save parent details";
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -89,21 +105,22 @@ const StepPlanholderInfo = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h2 className="font-display font-extrabold text-2xl md:text-3xl text-foreground">
-          Now, let&apos;s start with <span className="text-primary">your plan</span>
+          Tell us about your{" "}
+          <span className="text-primary">parent</span>
         </h2>
         <span className="text-xs text-muted-foreground bg-muted/30 px-3 py-1 rounded-full hidden md:block">
-          Planholder information
+          Parent details
         </span>
       </div>
 
-      {/* Row 1: Name + Email */}
+      {/* Row 1: Names */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">First name</label>
           <Input
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            placeholder="Amir"
+            placeholder="John"
             className="border-border"
           />
         </div>
@@ -117,26 +134,27 @@ const StepPlanholderInfo = () => {
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Email address</label>
+          <label className="text-xs text-muted-foreground mb-1 block">
+            What does he/she like to be called
+          </label>
           <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="amir@stealthstartup.com"
+            value={preferredName}
+            onChange={(e) => setPreferredName(e.target.value)}
+            placeholder="Preferred name"
             className="border-border"
           />
         </div>
       </div>
 
-      {/* Row 2: Country, State, Postal code */}
+      {/* Row 2: Location */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Country</label>
           <Select
-            value={phCountry}
+            value={country}
             onValueChange={(v) => {
-              setPhCountry(v);
-              setPhState("");
+              setCountry(v);
+              setState("");
             }}
           >
             <SelectTrigger>
@@ -154,7 +172,7 @@ const StepPlanholderInfo = () => {
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">State</label>
           {stateOptions.length > 0 ? (
-            <Select value={phState} onValueChange={setPhState}>
+            <Select value={state} onValueChange={setState}>
               <SelectTrigger>
                 <SelectValue placeholder="Select state" />
               </SelectTrigger>
@@ -168,8 +186,8 @@ const StepPlanholderInfo = () => {
             </Select>
           ) : (
             <Input
-              value={phState}
-              onChange={(e) => setPhState(e.target.value)}
+              value={state}
+              onChange={(e) => setState(e.target.value)}
               placeholder="State / Province"
               className="border-border"
             />
@@ -178,51 +196,34 @@ const StepPlanholderInfo = () => {
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Postal code</label>
           <Input
-            value={phPostalCode}
-            onChange={(e) => setPhPostalCode(e.target.value)}
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value)}
             placeholder="90005"
             className="border-border"
           />
         </div>
       </div>
 
-      {/* Row 3: Phone + Phone type */}
+      {/* Row 3: Relationship, Occupation, Gender */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div className="md:col-span-2">
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Preferred phone number
-          </label>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Relationship</label>
           <Input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="123-456-7890"
+            value={relationship}
+            onChange={(e) => setRelationship(e.target.value)}
+            placeholder="Father"
             className="border-border"
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Phone type</label>
-          <div className="flex h-9 rounded-md border border-border overflow-hidden">
-            {(["mobile", "home", "work"] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setPhoneType(type)}
-                className={`flex-1 text-xs font-medium transition-colors ${
-                  phoneType === type
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-transparent text-foreground hover:bg-muted/50"
-                }`}
-              >
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </button>
-            ))}
-          </div>
+          <label className="text-xs text-muted-foreground mb-1 block">Occupation</label>
+          <Input
+            value={occupation}
+            onChange={(e) => setOccupation(e.target.value)}
+            placeholder="Retired"
+            className="border-border"
+          />
         </div>
-      </div>
-
-      {/* Row 4: Gender, DOB, Nationality */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Gender</label>
           <div className="flex h-9 rounded-md border border-border overflow-hidden">
@@ -250,12 +251,25 @@ const StepPlanholderInfo = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Row 4: Height, Weight, Nationality */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Date of birth</label>
+          <label className="text-xs text-muted-foreground mb-1 block">Height</label>
           <Input
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            placeholder="09/09/1990"
+            value={height}
+            onChange={(e) => setHeight(e.target.value)}
+            placeholder="170cm"
+            className="border-border"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Weight</label>
+          <Input
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+            placeholder="70kg"
             className="border-border"
           />
         </div>
@@ -276,23 +290,14 @@ const StepPlanholderInfo = () => {
         </div>
       </div>
 
-      {/* Row 5: Height, Weight */}
+      {/* Row 5: Date of birth */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Height</label>
+          <label className="text-xs text-muted-foreground mb-1 block">Date of birth</label>
           <Input
-            value={height}
-            onChange={(e) => setHeight(e.target.value)}
-            placeholder="190cm"
-            className="border-border"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Weight</label>
-          <Input
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-            placeholder="83kg"
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            placeholder="01/15/1960"
             className="border-border"
           />
         </div>
@@ -302,7 +307,7 @@ const StepPlanholderInfo = () => {
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
-          onClick={() => setCurrentStep(STEPS.EMPLOYEES)}
+          onClick={handleBack}
           className="rounded-full px-8 flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" /> Back
@@ -319,4 +324,4 @@ const StepPlanholderInfo = () => {
   );
 };
 
-export default StepPlanholderInfo;
+export default StepParentsDetails;

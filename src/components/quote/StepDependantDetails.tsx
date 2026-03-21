@@ -299,7 +299,15 @@ const StepDependantDetails = () => {
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
-          onClick={() => setCurrentStep(STEPS.SPOUSE)}
+          onClick={() => {
+            if (data.includeParents === true) {
+              setCurrentStep(STEPS.PARENTS);
+            } else if (data.includeSpouse === true) {
+              setCurrentStep(STEPS.SPOUSE);
+            } else {
+              setCurrentStep(STEPS.FAMILY_QUESTIONS);
+            }
+          }}
           className="rounded-full px-8 flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" /> Back

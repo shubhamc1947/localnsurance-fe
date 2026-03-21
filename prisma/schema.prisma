@@ -101,6 +101,7 @@ model Quote {
 
   includeSpouse    Boolean?  @map("include_spouse")
   includeDependant Boolean?  @map("include_dependant")
+  includeParents   Boolean?  @map("include_parents")
   planStartDate    DateTime? @map("plan_start_date")
 
   user           User            @relation(fields: [userId], references: [id])
@@ -110,6 +111,7 @@ model Quote {
   invoices       Invoice[]
   planholderInfo PlanholderInfo?
   spouseInfo     SpouseInfo?
+  parentInfo     ParentInfo?
   dependants     DependantInfo[]
 
   @@map("quotes")
@@ -271,6 +273,30 @@ model DependantInfo {
   quote Quote @relation(fields: [quoteId], references: [id])
 
   @@map("dependant_info")
+}
+
+model ParentInfo {
+  id                  String    @id @default(cuid())
+  quoteId             String    @unique @map("quote_id")
+  firstName           String    @map("first_name")
+  lastName            String    @map("last_name")
+  preferredName       String?   @map("preferred_name")
+  gender              String?
+  dateOfBirth         DateTime? @map("date_of_birth")
+  country             String?
+  state               String?
+  postalCode          String?   @map("postal_code")
+  nationality         String?
+  height              String?
+  weight              String?
+  relationship        String?
+  occupation          String?
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  quote Quote @relation(fields: [quoteId], references: [id])
+
+  @@map("parent_info")
 }
 
 model OtpCode {

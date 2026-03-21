@@ -91,6 +91,22 @@ export interface QuoteFormData {
   spouseHeight: string;
   spouseWeight: string;
 
+  // Parents info
+  includeParents: boolean | null;
+  parentFirstName: string;
+  parentLastName: string;
+  parentPreferredName: string;
+  parentCountry: string;
+  parentState: string;
+  parentPostalCode: string;
+  parentGender: string;
+  parentDob: string;
+  parentNationality: string;
+  parentHeight: string;
+  parentWeight: string;
+  parentRelationship: string;
+  parentOccupation: string;
+
   // Dependant info
   includeDependant: boolean | null;
   dependants: DependantFormData[];
@@ -163,6 +179,20 @@ export const initialQuoteData: QuoteFormData = {
   spouseNationality: "",
   spouseHeight: "",
   spouseWeight: "",
+  includeParents: null,
+  parentFirstName: "",
+  parentLastName: "",
+  parentPreferredName: "",
+  parentCountry: "",
+  parentState: "",
+  parentPostalCode: "",
+  parentGender: "",
+  parentDob: "",
+  parentNationality: "",
+  parentHeight: "",
+  parentWeight: "",
+  parentRelationship: "",
+  parentOccupation: "",
   includeDependant: null,
   dependants: [],
   planStartDate: "",

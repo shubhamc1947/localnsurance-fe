@@ -9,7 +9,9 @@ import Step2Company from "@/components/quote/Step2Company";
 import StepIncludeSelf from "@/components/quote/StepIncludeSelf";
 import Step4Employees from "@/components/quote/Step4Employees";
 import StepPlanholderInfo from "@/components/quote/StepPlanholderInfo";
+import StepFamilyQuestions from "@/components/quote/StepFamilyQuestions";
 import StepSpouseDetails from "@/components/quote/StepSpouseDetails";
+import StepParentsDetails from "@/components/quote/StepParentsDetails";
 import StepDependantDetails from "@/components/quote/StepDependantDetails";
 import StepStartDate from "@/components/quote/StepStartDate";
 import { STEPS, getNextAfterEmployees } from "@/constants/onboarding-steps";
@@ -88,8 +90,12 @@ const Onboarding = () => {
         return <Step4Employees />;
       case STEPS.PLANHOLDER:
         return <StepPlanholderInfo />;
+      case STEPS.FAMILY_QUESTIONS:
+        return <StepFamilyQuestions />;
       case STEPS.SPOUSE:
         return <StepSpouseDetails />;
+      case STEPS.PARENTS:
+        return <StepParentsDetails />;
       case STEPS.DEPENDANT:
         return <StepDependantDetails />;
       case STEPS.START_DATE:

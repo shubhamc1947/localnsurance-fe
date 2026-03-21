@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuote } from "@/contexts/QuoteContext";
-import { STEPS } from "@/constants/onboarding-steps";
+import { STEPS, getNextAfterSpouse } from "@/constants/onboarding-steps";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,21 +12,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, HeartOff } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
 
 const StepSpouseDetails = () => {
   const { data, updateData, setCurrentStep } = useQuote();
-
-  // Phase tracking
-  const [phase, setPhase] = useState<"question" | "form">(
-    data.includeSpouse === true ? "form" : "question"
-  );
   const [isLoading, setIsLoading] = useState(false);
-
-  // Local selection for the question phase
-  const [wantsSpouse, setWantsSpouse] = useState<boolean | null>(data.includeSpouse);
 
   // Spouse form state
   const [spFirstName, setSpFirstName] = useState(data.spouseFirstName);
@@ -45,80 +37,6 @@ const StepSpouseDetails = () => {
 
   const spStateOptions = STATES_BY_COUNTRY[spCountry] || [];
 
-  // ─── Phase 1: Spouse Question ─────────────────────────────────────────────
-  if (phase === "question") {
-    const handleContinue = () => {
-      updateData({ includeSpouse: wantsSpouse });
-
-      if (wantsSpouse) {
-        setPhase("form");
-      } else {
-        // No spouse — move on to dependant question
-        setCurrentStep(STEPS.DEPENDANT);
-      }
-    };
-
-    return (
-      <div className="p-6 lg:p-10">
-        {/* Spouse question */}
-        <h2 className="font-display font-extrabold text-2xl md:text-3xl text-foreground mb-6">
-          Do you want to include your{" "}
-          <span className="text-primary">spouse</span> in the plan?
-        </h2>
-
-        <div className="grid grid-cols-2 gap-4 w-full max-w-lg mb-10">
-          <button
-            onClick={() => setWantsSpouse(true)}
-            className={`p-6 rounded-xl border-2 transition-all text-left ${
-              wantsSpouse === true
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-muted-foreground/40"
-            }`}
-          >
-            <Heart className="w-6 h-6 mb-2 text-foreground" />
-            <p className="font-bold text-foreground">Yes</p>
-            <p className="text-xs text-muted-foreground">
-              I want to include my spouse in this plan.
-            </p>
-          </button>
-          <button
-            onClick={() => setWantsSpouse(false)}
-            className={`p-6 rounded-xl border-2 transition-all text-left ${
-              wantsSpouse === false
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-muted-foreground/40"
-            }`}
-          >
-            <HeartOff className="w-6 h-6 mb-2 text-foreground" />
-            <p className="font-bold text-foreground">No</p>
-            <p className="text-xs text-muted-foreground">
-              I don&apos;t want to include my spouse in the plan.
-            </p>
-          </button>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentStep(STEPS.PLANHOLDER)}
-            className="rounded-full px-8 flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back
-          </Button>
-          <Button
-            onClick={handleContinue}
-            disabled={wantsSpouse === null}
-            className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10"
-          >
-            Continue
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── Phase 2: Spouse Form ───────────────────────────────────────────────────
   const handleSubmitSpouse = async () => {
     setIsLoading(true);
     try {
@@ -163,7 +81,11 @@ const StepSpouseDetails = () => {
         spouseWeight: spWeight,
       });
 
-      setCurrentStep(STEPS.DEPENDANT);
+      const nextStep = getNextAfterSpouse(
+        data.includeParents === true,
+        data.includeDependant === true
+      );
+      setCurrentStep(nextStep);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to save spouse details";
@@ -380,7 +302,7 @@ const StepSpouseDetails = () => {
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
-          onClick={() => setPhase("question")}
+          onClick={() => setCurrentStep(STEPS.FAMILY_QUESTIONS)}
           className="rounded-full px-8 flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" /> Back
