@@ -11,6 +11,7 @@ type InvoiceStatus = "PAID" | "UNPAID" | "DRAFT";
 
 interface Invoice {
   id: string;
+  quoteId: string;
   number: string;
   date: string;
   status: InvoiceStatus;
@@ -30,10 +31,10 @@ interface EmployeePlan {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapToEmployeePlan(emp: any): EmployeePlan {
   return {
-    name: `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || "Unknown",
-    avatar: emp.avatar || "/images/testimonial-avatar.jpg",
-    plan: emp.plan || emp.planName || "BASIC",
-    price: emp.price != null ? `$${emp.price}` : null,
+    name: emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || "Unknown",
+    avatar: "/images/testimonial-avatar.jpg",
+    plan: emp.planName || emp.plan || "BASIC",
+    price: emp.annualCost != null ? `$${Number(emp.annualCost).toLocaleString()}` : null,
     status: emp.status === "PENDING" ? "PENDING" : undefined,
   };
 }
@@ -42,12 +43,13 @@ function mapToEmployeePlan(emp: any): EmployeePlan {
 function mapToInvoice(inv: any): Invoice {
   return {
     id: inv.id,
-    number: inv.number || `#${inv.id?.slice(0, 4) || "0000"}`,
-    date: inv.date || new Date(inv.createdAt || Date.now()).toLocaleDateString("en-GB").replace(/\//g, "."),
+    quoteId: inv.quoteId || "",
+    number: inv.invoiceNumber || inv.number || `#${inv.id?.slice(0, 4) || "0000"}`,
+    date: new Date(inv.createdAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     status: (inv.status || "DRAFT").toUpperCase() as InvoiceStatus,
-    coveragePlan: inv.coveragePlan || inv.planName || "BASIC PLAN",
-    employeesInsured: inv.employeesInsured || inv.employeeCount || 0,
-    total: inv.total || inv.amount || 0,
+    coveragePlan: inv.coveragePlan || "BASIC PLAN",
+    employeesInsured: inv.employeeCount || 0,
+    total: inv.amount || 0,
   };
 }
 
@@ -61,7 +63,9 @@ type TabFilter = "all" | "unpaid" | "draft";
 
 export default function BillsPayment() {
   const { user } = useAuth();
-  const companyId = (user?.companies?.[0] as { id: string } | undefined)?.id;
+  const company = user?.companies?.[0] as { id: string; legalName?: string } | undefined;
+  const companyId = company?.id;
+  const companyName = company?.legalName || "";
 
   const [activeTab, setActiveTab] = useState<TabFilter>("unpaid");
   const [plaidOpen, setPlaidOpen] = useState(false);
@@ -135,30 +139,30 @@ export default function BillsPayment() {
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">
-                Stealth Startup & Localsurance <span className="bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded ml-2">#6475</span>
+                {companyName || "Your Company"} & Localsurance
               </p>
-              <p className="text-xs text-muted-foreground">St. 7 Attorney Woo, Jeju, South Korea</p>
+              <p className="text-xs text-muted-foreground">Health Insurance Contract</p>
             </div>
           </div>
           <ChevronDown className="w-5 h-5 text-muted-foreground" />
         </div>
 
-        <div className="flex items-start gap-8 border-t border-border pt-4">
+        <div className="flex items-start gap-8 border-t border-border pt-4 flex-wrap">
           <div>
-            <p className="text-xs text-muted-foreground">Effective Date</p>
-            <p className="text-sm font-medium text-foreground">March 23, 2024</p>
+            <p className="text-xs text-muted-foreground">Employees</p>
+            <p className="text-sm font-medium text-foreground">{employees.length}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">End Date</p>
-            <p className="text-sm font-medium text-foreground">March 16, 2028</p>
+            <p className="text-xs text-muted-foreground">Active</p>
+            <p className="text-sm font-medium text-green-600">{employees.filter(e => !e.status).length}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Renews In</p>
-            <p className="text-sm font-medium text-foreground">20 Days</p>
+            <p className="text-xs text-muted-foreground">Pending</p>
+            <p className="text-sm font-medium text-accent">{employees.filter(e => e.status === "PENDING").length}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Performance</p>
-            <p className="text-sm font-medium text-accent">In Progress 3/5</p>
+            <p className="text-xs text-muted-foreground">Total Invoices</p>
+            <p className="text-sm font-medium text-foreground">{invoices.length}</p>
           </div>
           <div className="ml-auto bg-primary/5 border border-primary/20 rounded-lg px-4 py-2 max-w-xs">
             <p className="text-xs text-primary">
@@ -221,7 +225,7 @@ export default function BillsPayment() {
 
         {/* Summary */}
         <div className="bg-background border border-border rounded-xl p-6">
-          <h2 className="font-display text-xl font-bold text-foreground mb-4">Summery Invoices</h2>
+          <h2 className="font-display text-xl font-bold text-foreground mb-4">Invoice Summary</h2>
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <p className="text-xs text-muted-foreground">Payment Schedule:</p>
@@ -235,7 +239,11 @@ export default function BillsPayment() {
           <div className="flex items-end justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Next Bill:</p>
-              <p className="text-2xl font-bold text-foreground">$840.20</p>
+              <p className="text-2xl font-bold text-foreground">
+                {unpaidCount > 0
+                  ? `$${invoices.filter(i => i.status === "UNPAID").reduce((sum, i) => sum + i.total, 0).toLocaleString()}`
+                  : "$0"}
+              </p>
             </div>
             <button
               onClick={() => setPlaidOpen(true)}
@@ -355,8 +363,8 @@ export default function BillsPayment() {
           <button
             onClick={() => {
               const unpaidInvoice = invoices.find((inv) => inv.status === "UNPAID");
-              if (unpaidInvoice) {
-                paymentMutation.mutate(unpaidInvoice.id);
+              if (unpaidInvoice && unpaidInvoice.quoteId) {
+                paymentMutation.mutate(unpaidInvoice.quoteId);
               } else {
                 toast.error("No unpaid invoices found.");
                 setPlaidOpen(false);
