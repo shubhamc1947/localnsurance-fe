@@ -32,7 +32,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (data: Record<string, unknown>) => Promise<void>;
+  register: (data: Record<string, unknown>) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -98,6 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setUser(responseData.user);
+    return responseData;
   };
 
   return (

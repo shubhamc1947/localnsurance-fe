@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
 
 const companyTypes = [
   "Software & Design Agency",
@@ -30,9 +31,16 @@ const Step2Company = () => {
 
   const handleNext = async () => {
     updateData({ companyType: selectedType });
+
+    // If already registered, just advance to next step
+    if (data.quoteId && data.companyId) {
+      setCurrentStep(3);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await register({
+      const result = await register({
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
@@ -58,6 +66,13 @@ const Step2Company = () => {
         costPerMember: data.costPerMember,
         totalCost: data.totalCost,
       });
+
+      // Store the returned IDs in QuoteContext
+      updateData({
+        quoteId: result.quote.id,
+        companyId: result.company.id
+      });
+
       setCurrentStep(3);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Registration failed";
@@ -170,12 +185,12 @@ const Step2Company = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Country of residence</label>
-          <Select value={data.companyCountry} onValueChange={(v) => updateData({ companyCountry: v })}>
+          <Select value={data.companyCountry} onValueChange={(v) => updateData({ companyCountry: v, companyState: "" })}>
             <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="us">United States</SelectItem>
-              <SelectItem value="uk">United Kingdom</SelectItem>
-              <SelectItem value="ca">Canada</SelectItem>
+              {COUNTRIES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -184,9 +199,12 @@ const Step2Company = () => {
           <Select value={data.companyState} onValueChange={(v) => updateData({ companyState: v })}>
             <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="il">Illinois</SelectItem>
-              <SelectItem value="ca">California</SelectItem>
-              <SelectItem value="ny">New York</SelectItem>
+              {(STATES_BY_COUNTRY[data.companyCountry] || []).map((s) => (
+                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              ))}
+              {!STATES_BY_COUNTRY[data.companyCountry] && (
+                <SelectItem value="other">Other</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
