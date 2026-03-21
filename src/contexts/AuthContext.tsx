@@ -42,7 +42,7 @@ interface AuthContextType {
   user: User | null;
   latestQuote: LatestQuote | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   register: (data: Record<string, unknown>) => Promise<any>;
 }
