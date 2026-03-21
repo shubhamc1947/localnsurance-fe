@@ -9,6 +9,7 @@ import Step2Company from "@/components/quote/Step2Company";
 import StepIncludeSelf from "@/components/quote/StepIncludeSelf";
 import Step4Employees from "@/components/quote/Step4Employees";
 import StepStartDate from "@/components/quote/StepStartDate";
+import StepPayment from "@/components/quote/StepPayment";
 import { STEPS } from "@/constants/onboarding-steps";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -42,7 +43,7 @@ const Onboarding = () => {
       } else {
         router.push("/dashboard/members");
       }
-    }, 3000);
+    }, 4000);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep]);
@@ -99,6 +100,8 @@ const Onboarding = () => {
         return <Step4Employees />;
       case STEPS.START_DATE:
         return <StepStartDate />;
+      case STEPS.PAYMENT:
+        return <StepPayment />;
       case STEPS.SUCCESS:
         return (
           <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
@@ -119,11 +122,11 @@ const Onboarding = () => {
 
             {/* Title */}
             <h2 className="font-display font-extrabold text-2xl md:text-3xl text-foreground mb-3">
-              Invites Successfully Sent!
+              Payment Submitted!
             </h2>
             <p className="text-muted-foreground text-sm max-w-sm mb-6 leading-relaxed">
-              Invites to all your employees have been successfully sent. They will need to go through
-              onboarding, and you will be able to track the entire process through the dashboard.
+              We&apos;ll verify your payment and activate your plan. You&apos;ll receive a
+              confirmation email once verified.
             </p>
 
             {/* Status line */}

@@ -20,10 +20,18 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    if (!password) {
+      toast.error("Please enter your password");
+      return;
+    }
     setIsLoading(true);
     try {
-      await login(email, password);
-      router.push("/dashboard/members");
+      const loggedInUser = await login(email, password);
+      router.push(loggedInUser?.role === "SUPER_ADMIN" ? "/admin" : "/dashboard/members");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";
       toast.error(message);
@@ -65,7 +73,7 @@ const Login = () => {
                 <label className="text-sm text-muted-foreground mb-2 block">Your email</label>
                 <Input
                   type="email"
-                  placeholder="amir@stealthstartup.com"
+                  placeholder="you@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 bg-card border-0 rounded-lg text-sm"

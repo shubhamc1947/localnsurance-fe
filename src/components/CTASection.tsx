@@ -23,7 +23,7 @@ const CTASection = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Contact form submitted:", form);
+    // TODO: wire up contact form submission
   };
 
   return (

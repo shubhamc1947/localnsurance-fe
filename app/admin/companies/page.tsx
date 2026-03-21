@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Search,
   MoreHorizontal,
@@ -9,8 +9,11 @@ import {
   Pencil,
   Loader2,
   Building2,
+  Power,
+  PowerOff,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -35,6 +38,7 @@ interface Company {
   plan: string;
   employeeCount: number;
   status: string;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -63,6 +67,31 @@ const statusColor = (status?: string | null) => {
 export default function AdminCompaniesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const res = await fetch(`/api/admin/companies/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || "Failed to update company status");
+      }
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast.success(
+        variables.isActive ? "Company enabled successfully" : "Company disabled successfully"
+      );
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
 
   const { data, isLoading } = useQuery<CompaniesResponse>({
     queryKey: ["admin-companies", currentPage, searchTerm],
@@ -130,7 +159,8 @@ export default function AdminCompaniesPage() {
                   <TableHead>Owner</TableHead>
                   <TableHead>Plan</TableHead>
                   <TableHead>Employees</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Quote Status</TableHead>
+                  <TableHead>Policy</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
@@ -139,7 +169,7 @@ export default function AdminCompaniesPage() {
                 {companies.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="text-center text-sm text-muted-foreground py-12"
                     >
                       No companies found.
@@ -147,7 +177,10 @@ export default function AdminCompaniesPage() {
                   </TableRow>
                 ) : (
                   companies.map((company) => (
-                    <TableRow key={company.id} className="hover:bg-secondary/30">
+                    <TableRow
+                      key={company.id}
+                      className={`hover:bg-secondary/30 ${!company.isActive ? "opacity-50" : ""}`}
+                    >
                       <TableCell className="font-medium text-foreground">
                         {company.name}
                       </TableCell>
@@ -168,6 +201,18 @@ export default function AdminCompaniesPage() {
                           {company.status || "DRAFT"}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            company.isActive
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : "bg-red-50 text-red-700 border-red-200"
+                          }
+                        >
+                          {company.isActive ? "Active" : "Disabled"}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {new Date(company.createdAt).toLocaleDateString()}
                       </TableCell>
@@ -186,6 +231,27 @@ export default function AdminCompaniesPage() {
                             <DropdownMenuItem className="flex items-center gap-2">
                               <Pencil className="w-4 h-4" />
                               Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="flex items-center gap-2"
+                              onClick={() =>
+                                toggleMutation.mutate({
+                                  id: company.id,
+                                  isActive: !company.isActive,
+                                })
+                              }
+                            >
+                              {company.isActive ? (
+                                <>
+                                  <PowerOff className="w-4 h-4 text-red-500" />
+                                  <span className="text-red-600">Disable Policy</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Power className="w-4 h-4 text-green-500" />
+                                  <span className="text-green-600">Enable Policy</span>
+                                </>
+                              )}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

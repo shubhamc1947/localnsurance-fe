@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuote } from "@/contexts/QuoteContext";
 import { STEPS } from "@/constants/onboarding-steps";
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,17 @@ const StepEmailVerify = () => {
   const { data, updateData, setCurrentStep } = useQuote();
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const hasSentOtp = useRef(false);
 
-  // Auto-send OTP on mount (only if not already verified)
+  // Auto-send OTP on mount (only once, only if not already verified)
   useEffect(() => {
     if (data.emailVerified) {
-      // Already verified — skip straight to next step
       setCurrentStep(STEPS.COMPANY);
       return;
     }
+    if (hasSentOtp.current) return;
+    hasSentOtp.current = true;
+
     const sendOtp = async () => {
       try {
         const res = await fetch("/api/auth/send-verification-otp", {

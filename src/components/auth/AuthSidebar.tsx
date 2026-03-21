@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 
 const testimonials = [
   {
@@ -100,11 +101,7 @@ const AuthSidebar = () => {
                 {testimonials[activeIndex].text}
               </p>
               <div className="flex items-center gap-3">
-                <img
-                  src="/images/testimonial-avatar.jpg"
-                  alt={testimonials[activeIndex].name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+                <InitialsAvatar name={testimonials[activeIndex].name} size="md" />
                 <div>
                   <p className="text-primary-foreground font-semibold text-sm">
                     {testimonials[activeIndex].name}

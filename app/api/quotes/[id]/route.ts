@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { sendEmail } from "@/lib/email";
+import { getPaymentConfirmationTemplate } from "@/lib/email-templates";
 
 export async function GET(
   request: NextRequest,
@@ -91,8 +93,29 @@ export async function PUT(
         ...(includeDependant !== undefined && { includeDependant }),
         ...(planStartDate !== undefined && { planStartDate: new Date(planStartDate) }),
       },
-      include: { company: true },
+      include: { company: true, user: { select: { email: true, firstName: true, lastName: true } } },
     });
+
+    // Send payment confirmation email when status changes to SUBMITTED
+    if (status === "SUBMITTED" && quote.user) {
+      try {
+        const html = getPaymentConfirmationTemplate({
+          userName: quote.user.firstName || "there",
+          companyName: quote.company?.legalName || "your company",
+          planName: (quote.selectedPlan || "standard").charAt(0).toUpperCase() + (quote.selectedPlan || "standard").slice(1),
+          amount: quote.totalCost || 0,
+          quoteRef: `Quote #${quote.id.slice(0, 8).toUpperCase()}`,
+        });
+        await sendEmail({
+          to: quote.user.email,
+          subject: "Payment Submission Received - Localsurance",
+          html,
+        });
+      } catch (emailError) {
+        console.error("[API] Failed to send payment confirmation email:", emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json({ quote });
   } catch (error) {

@@ -124,6 +124,122 @@ export function getOtpEmailTemplate(
 }
 
 /**
+ * Payment Confirmation Email Template
+ */
+export function getPaymentConfirmationTemplate(params: {
+  userName: string;
+  companyName: string;
+  planName: string;
+  amount: number;
+  quoteRef: string;
+}): string {
+  const { userName, companyName, planName, amount, quoteRef } = params;
+
+  const content = `
+          <tr>
+            <td align="center" style="padding:8px 40px 0 40px;">
+              <h1 style="margin:0;font-size:24px;font-weight:bold;color:${BRAND.darkText};">Payment Submission Received</h1>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:16px 40px 24px 40px;">
+              <p style="margin:0;font-size:16px;color:${BRAND.mutedText};line-height:24px;">
+                Hi ${userName}, we&rsquo;ve received your payment submission for <strong style="color:${BRAND.darkText};">${companyName}</strong>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 24px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND.lightGrayBg};border-radius:8px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="padding:6px 0;font-size:14px;color:${BRAND.mutedText};line-height:22px;">
+                          <strong style="color:${BRAND.darkText};">Plan:</strong> ${planName}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;font-size:14px;color:${BRAND.mutedText};line-height:22px;">
+                          <strong style="color:${BRAND.darkText};">Amount:</strong> $${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;font-size:14px;color:${BRAND.mutedText};line-height:22px;">
+                          <strong style="color:${BRAND.darkText};">Reference:</strong> ${quoteRef}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:0 40px 28px 40px;">
+              <p style="margin:0;font-size:14px;color:${BRAND.mutedText};line-height:22px;">
+                Our team will verify the payment and activate your plan. You&rsquo;ll receive another email once your plan is active.
+              </p>
+            </td>
+          </tr>`;
+
+  return baseLayout(content);
+}
+
+/**
+ * Plan Activated Email Template
+ */
+export function getPlanActivatedTemplate(params: {
+  userName: string;
+  companyName: string;
+  planName: string;
+}): string {
+  const { userName, companyName, planName } = params;
+
+  const content = `
+          <tr>
+            <td align="center" style="padding:8px 40px 0 40px;">
+              <h1 style="margin:0;font-size:24px;font-weight:bold;color:${BRAND.darkText};">Your Plan is Active!</h1>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:16px 40px 24px 40px;">
+              <p style="margin:0;font-size:16px;color:${BRAND.mutedText};line-height:24px;">
+                Hi ${userName}, great news! Your <strong style="color:${BRAND.darkText};">${planName}</strong> plan for <strong style="color:${BRAND.darkText};">${companyName}</strong> has been activated.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 24px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND.lightGrayBg};border-radius:8px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0;font-size:14px;color:${BRAND.mutedText};line-height:22px;">
+                      Log in to your dashboard to manage your team&rsquo;s coverage, add employees, and view your plan details.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:0 40px 28px 40px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="background-color:${BRAND.primaryBlue};border-radius:8px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://localsurance.com"}/dashboard" target="_blank" style="display:inline-block;padding:14px 36px;color:${BRAND.white};font-size:16px;font-weight:bold;text-decoration:none;letter-spacing:0.3px;">
+                      Go to Dashboard
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+
+  return baseLayout(content);
+}
+
+/**
  * Employee Onboarding Invitation Email Template
  */
 export function getEmployeeInviteTemplate(params: {

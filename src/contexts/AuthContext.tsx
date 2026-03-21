@@ -27,8 +27,20 @@ interface User {
   companies?: unknown[];
 }
 
+interface LatestQuote {
+  id: string;
+  status: string;
+  selectedPlan?: string | null;
+  totalCost?: number | null;
+  planStartDate?: string | null;
+  planholderInfo?: unknown;
+  spouseInfo?: unknown;
+  dependants?: unknown[];
+}
+
 interface AuthContextType {
   user: User | null;
+  latestQuote: LatestQuote | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -39,6 +51,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [latestQuote, setLatestQuote] = useState<LatestQuote | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -48,11 +61,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
+        setLatestQuote(data.latestQuote || null);
       } else {
         setUser(null);
+        setLatestQuote(null);
       }
     } catch {
       setUser(null);
+      setLatestQuote(null);
     } finally {
       setLoading(false);
     }
@@ -76,11 +92,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setUser(data.user);
+    return data.user;
   };
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
+    setLatestQuote(null);
     router.push("/login");
   };
 
@@ -102,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, latestQuote, loading, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

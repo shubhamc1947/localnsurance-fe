@@ -41,51 +41,30 @@ export async function GET(request: NextRequest) {
     });
     const userCompanyIds = userCompanies.map((c) => c.id);
 
-    // If user has no companies, they're an employee - return their own record
+    // If user has no companies, they're an employee — allow them to view their company's employees
     if (userCompanyIds.length === 0) {
       const ownEmployee = await prisma.employee.findFirst({
         where: { email: user.email as string },
         include: { quote: true, company: true },
       });
-      if (ownEmployee) {
-        const nameParts = ownEmployee.fullName.split(" ");
-        const dependantsData = ownEmployee.dependantsData as unknown[] | null;
-        const mappedOwn = {
-          id: ownEmployee.id,
-          fullName: ownEmployee.fullName,
-          firstName: nameParts[0] || "",
-          lastName: nameParts.slice(1).join(" ") || "",
-          email: ownEmployee.email,
-          status: ownEmployee.status,
-          country: ownEmployee.country || "",
-          countryFlag: "",
-          phone: ownEmployee.phone || "",
-          gender: ownEmployee.gender || "",
-          dateOfBirth: ownEmployee.dateOfBirth,
-          nationality: ownEmployee.nationality || "",
-          height: ownEmployee.height || "",
-          weight: ownEmployee.weight || "",
-          includeSpouse: ownEmployee.includeSpouse,
-          includeDependant: ownEmployee.includeDependant,
-          dependantsCount: dependantsData?.length || 0,
-          onboardingComplete: ownEmployee.onboardingComplete,
-          planId: ownEmployee.quoteId?.slice(0, 8)?.toUpperCase() || "N/A",
-          companyName: ownEmployee.company?.legalName || "",
-          planName: ownEmployee.quote?.selectedPlan || "",
-          annualCost: ownEmployee.quote?.costPerMember || null,
-          createdAt: ownEmployee.createdAt,
-        };
-        return NextResponse.json({ employees: [mappedOwn], total: 1, page: 1, totalPages: 1 });
+      if (ownEmployee && ownEmployee.companyId) {
+        // Allow employees to see all employees in their own company (for tree view)
+        // If a companyId was provided, only allow if it matches their own company
+        if (companyId && companyId !== ownEmployee.companyId) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        where.companyId = ownEmployee.companyId;
+      } else {
+        return NextResponse.json({ employees: [], total: 0, page: 1, totalPages: 1 });
       }
-      return NextResponse.json({ employees: [], total: 0, page: 1, totalPages: 1 });
-    }
+    } else {
+      if (companyId && !userCompanyIds.includes(companyId)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    if (companyId && !userCompanyIds.includes(companyId)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!companyId) {
-      where.companyId = { in: userCompanyIds };
+      if (!companyId) {
+        where.companyId = { in: userCompanyIds };
+      }
     }
 
     const [employees, total] = await Promise.all([

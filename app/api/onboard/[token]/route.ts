@@ -36,15 +36,29 @@ export async function GET(
       );
     }
 
-    // Check if onboarding is already complete
+    // Check if password already set (account created but onboarding not complete)
+    const hasPassword = !!employee.passwordHash;
+
+    // Check if onboarding is fully complete
     if (employee.onboardingComplete) {
-      return NextResponse.json(
-        { error: "You have already completed onboarding. Please log in instead." },
-        { status: 409 }
-      );
+      return NextResponse.json({
+        status: "completed",
+        message: "You have already completed onboarding.",
+        email: employee.email,
+      });
+    }
+
+    // Password already set but onboarding not complete — redirect to /profile/onboard
+    if (hasPassword) {
+      return NextResponse.json({
+        status: "password_set",
+        message: "Account already created. Continue filling your details.",
+        email: employee.email,
+      });
     }
 
     return NextResponse.json({
+      status: "new",
       employee: {
         id: employee.id,
         fullName: employee.fullName,

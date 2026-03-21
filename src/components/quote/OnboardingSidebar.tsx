@@ -147,75 +147,77 @@ const OnboardingSidebar = () => {
 
       {/* Contact Query Dialog */}
       <Dialog open={contactOpen} onOpenChange={setContactOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Have a question? Let us know!</DialogTitle>
             <DialogDescription>
               Fill out the form below and we will get back to you as soon as possible.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 mt-2">
+          <div className="space-y-3 mt-1">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Name</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Name</label>
               <input
                 type="text"
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
                 placeholder="Your name"
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-2.5 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Email</label>
               <input
                 type="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-2.5 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Phone number <span className="text-muted-foreground font-normal">(optional)</span></label>
-              <input
-                type="tel"
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+1 (555) 000-0000"
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Phone <span className="text-muted-foreground/60">(opt)</span></label>
+                <input
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  placeholder="+1 555-000"
+                  className="w-full px-2.5 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Best time</label>
+                <Select value={contactBestTime} onValueChange={setContactBestTime}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Morning">Morning</SelectItem>
+                    <SelectItem value="Afternoon">Afternoon</SelectItem>
+                    <SelectItem value="Evening">Evening</SelectItem>
+                    <SelectItem value="Anytime">Anytime</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Best time to contact</label>
-              <Select value={contactBestTime} onValueChange={setContactBestTime}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Morning">Morning</SelectItem>
-                  <SelectItem value="Afternoon">Afternoon</SelectItem>
-                  <SelectItem value="Evening">Evening</SelectItem>
-                  <SelectItem value="Anytime">Anytime</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Message <span className="text-muted-foreground font-normal">(optional)</span></label>
+              <label className="text-xs text-muted-foreground mb-1 block">Message <span className="text-muted-foreground/60">(opt)</span></label>
               <textarea
                 value={contactMessage}
                 onChange={(e) => setContactMessage(e.target.value)}
-                placeholder="Tell us how we can help..."
-                rows={3}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                placeholder="How can we help?"
+                rows={2}
+                className="w-full px-2.5 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none"
               />
             </div>
             <button
               onClick={handleContactSubmit}
               disabled={isSubmitting}
-              className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-primary text-primary-foreground py-2 rounded-md text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
               {isSubmitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                <><Loader2 className="w-3 h-3 animate-spin" /> Sending...</>
               ) : (
                 "Submit"
               )}

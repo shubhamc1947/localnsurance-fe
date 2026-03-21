@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, Grid3X3, Network, Users, CreditCard, MessageCircleQuestion, MoreHorizontal, ChevronDown } from "lucide-react";
+import { Search, Grid3X3, Network, Users, CreditCard, MessageCircleQuestion, MoreHorizontal, ChevronDown, Shield } from "lucide-react";
 import NavLink from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -20,14 +20,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 
-const insurancePlanItems = [
-  { title: "Company Insurance Tree", url: "/dashboard/insurance-tree", icon: Network },
+const adminPlanItems = [
   { title: "Members Overview", url: "/dashboard/members", icon: Users },
+  { title: "Insurance Tree", url: "/dashboard/insurance-tree", icon: Network },
   { title: "Bills & Payment", url: "/dashboard/bills", icon: CreditCard },
 ];
 
+const employeePlanItems = [
+  { title: "My Plan", url: "/dashboard/members", icon: Shield },
+  { title: "Insurance Tree", url: "/dashboard/insurance-tree", icon: Network },
+];
+
 const otherItems = [
+  { title: "My Profile", url: "/dashboard/profile", icon: Users },
   { title: "Support", url: "/dashboard/support", icon: MessageCircleQuestion },
 ];
 
@@ -38,6 +45,10 @@ export default function DashboardSidebar() {
   const [searchValue, setSearchValue] = useState("");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(true);
+
+  const companyId = (user?.companies?.[0] as { id: string } | undefined)?.id;
+  const isAdmin = !!companyId;
+  const insurancePlanItems = isAdmin ? adminPlanItems : employeePlanItems;
 
   const isActive = (path: string) => pathname === path;
 
@@ -74,12 +85,12 @@ export default function DashboardSidebar() {
         </div>
 
         <div className="flex items-center gap-3 mt-4">
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-            <img src="/placeholder.svg" alt="Company" className="w-full h-full object-cover" />
-          </div>
+          <InitialsAvatar name={isAdmin ? ((user?.companies?.[0] as any)?.legalName || "C") : (user?.firstName || "U")} size="md" />
           <div>
-            <p className="text-xs text-muted-foreground">Your company</p>
-            <p className="text-sm font-semibold text-foreground">{(user?.companies?.[0] as { legalName?: string } | undefined)?.legalName || "My Company"}</p>
+            <p className="text-xs text-muted-foreground">{isAdmin ? "Your company" : "Employee"}</p>
+            <p className="text-sm font-semibold text-foreground">
+              {isAdmin ? (user?.companies?.[0] as any)?.legalName || "" : `${user?.firstName || ""} ${user?.lastName || ""}`.trim()}
+            </p>
           </div>
         </div>
 
@@ -105,7 +116,7 @@ export default function DashboardSidebar() {
             )}
           >
             <Grid3X3 className="w-4 h-4" />
-            <span className="flex-1 text-left">Company Insurance Plan</span>
+            <span className="flex-1 text-left">{isAdmin ? "Company Insurance Plan" : "My Insurance"}</span>
             <ChevronDown className={cn("w-4 h-4 transition-transform", !planOpen && "-rotate-90")} />
           </button>
 
@@ -167,7 +178,7 @@ export default function DashboardSidebar() {
         <Popover open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
           <PopoverTrigger asChild>
             <button className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-secondary/50 transition-colors">
-              <img src="/images/testimonial-avatar.jpg" alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
+              <InitialsAvatar name={user?.firstName ?? "User"} size="md" />
               <div className="flex-1 text-left">
                 <p className="text-sm font-medium text-foreground">{user?.firstName ?? "User"}</p>
                 <p className="text-xs text-muted-foreground">{user?.email ?? ""}</p>

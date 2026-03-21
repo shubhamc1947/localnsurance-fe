@@ -1,20 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Filter, ArrowDownUp, MoreHorizontal, Copy, ArrowDown, X, Info, Eye, RefreshCw, Mail, Ban, UserPlus, Loader2, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Filter, ArrowDownUp, MoreHorizontal, Copy, ArrowDown, X, Info, Eye, Mail, UserPlus, Loader2, Send, Clock, UserCog, MessageCircleQuestion, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { PLAN_DETAILS } from "@/data/planDetails";
+import { CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 
-type MemberStatus = "ACTIVE" | "PENDING" | "CANCELED";
+type MemberStatus = "ACTIVE" | "PENDING" | "CANCELED" | "DRAFT" | "SUBMITTED";
 
 interface Member {
   id: string;
   name: string;
-  avatar: string;
   planId: string;
   status: MemberStatus;
   email: string;
@@ -29,7 +32,6 @@ function mapEmployeeToMember(emp: any): Member {
   return {
     id: emp.id,
     name: emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || "Unknown",
-    avatar: "/images/testimonial-avatar.jpg",
     planId: emp.planId || "N/A",
     status: (emp.status || "PENDING").toUpperCase() as MemberStatus,
     email: emp.email || "",
@@ -44,12 +46,16 @@ const statusColors: Record<MemberStatus, string> = {
   ACTIVE: "bg-green-50 text-green-600 border-green-200",
   PENDING: "bg-orange-50 text-orange-500 border-orange-200",
   CANCELED: "bg-red-50 text-red-500 border-red-200",
+  DRAFT: "bg-muted text-muted-foreground border-border",
+  SUBMITTED: "bg-blue-50 text-blue-600 border-blue-200",
 };
 
 export default function MembersOverview() {
-  const { user } = useAuth();
+  const { user, latestQuote } = useAuth();
   const companyId = (user?.companies?.[0] as { id: string } | undefined)?.id;
+  const quoteStatus = latestQuote?.status;
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -132,8 +138,14 @@ export default function MembersOverview() {
     },
   });
 
-  const members: Member[] = (data?.employees || []).map(mapEmployeeToMember);
+  const allMembers: Member[] = (data?.employees || []).map(mapEmployeeToMember);
   const totalPages = data?.totalPages || 1;
+
+  // For employee view: find THEIR OWN record, not just first in list
+  const myRecord = isEmployee
+    ? allMembers.find((m) => m.email === user?.email) || allMembers[0]
+    : null;
+  const members = allMembers;
 
   const toggleMember = (id: string) => {
     setSelectedMembers((prev) =>
@@ -159,15 +171,171 @@ export default function MembersOverview() {
     });
   };
 
+  // ─── Employee "My Plan" view ───
+  if (isEmployee) {
+    return (
+      <div className="p-8 max-w-[1200px]">
+        {/* Plan activation status banner */}
+        {quoteStatus && quoteStatus !== "ACTIVE" && (
+          <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl border border-orange-200 bg-orange-50">
+            <Clock className="w-5 h-5 text-orange-500 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-orange-700">
+                {quoteStatus === "SUBMITTED"
+                  ? "Your plan is pending activation. Our team is verifying your payment."
+                  : quoteStatus === "DRAFT"
+                    ? "Your plan is not yet active. Please complete onboarding to activate."
+                    : "Your plan status is currently: " + quoteStatus}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <h1 className="font-display text-3xl font-bold text-foreground leading-tight mb-6">
+          My Insurance Plan
+        </h1>
+
+        <div className="space-y-6">
+          {/* Personal info card */}
+          {isLoading ? (
+            <div className="bg-background rounded-xl border border-border p-6">
+              <div className="flex items-center gap-4 mb-6 animate-pulse">
+                <div className="w-14 h-14 bg-muted rounded-full" />
+                <div className="space-y-2">
+                  <div className="h-5 bg-muted rounded w-40" />
+                  <div className="h-4 bg-muted rounded w-56" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-muted/30 rounded-lg p-3 animate-pulse">
+                    <div className="h-3 bg-muted rounded w-16 mb-2" />
+                    <div className="h-4 bg-muted rounded w-20" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-background rounded-xl border border-border p-6">
+              <div className="flex items-center gap-4 mb-6">
+                <InitialsAvatar name={myRecord?.name || user?.firstName || "?"} size="lg" />
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">{myRecord?.name || `${user?.firstName || ""} ${user?.lastName || ""}`.trim()}</h2>
+                  <p className="text-sm text-muted-foreground">{myRecord?.email || user?.email}</p>
+                </div>
+                <div className="ml-auto">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[myRecord?.status || "PENDING"]}`}>
+                    {myRecord?.status || "PENDING"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-muted/30 rounded-lg p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Plan</p>
+                  <p className="text-sm font-semibold text-foreground capitalize">{myRecord?.planId || "\u2014"}</p>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Country</p>
+                  <p className="text-sm font-semibold text-foreground">{myRecord?.country || "\u2014"}</p>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Dependants</p>
+                  <p className="text-sm font-semibold text-foreground">{myRecord?.dependents ?? 0}</p>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Annual Cost</p>
+                  <p className="text-sm font-semibold text-foreground">{myRecord?.annualCost ? `$${myRecord.annualCost.toLocaleString()}` : "\u2014"}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Plan Inclusions & Exclusions */}
+          {(() => {
+            const planKey = (latestQuote?.selectedPlan || myRecord?.planId || "").toLowerCase();
+            const plan = PLAN_DETAILS[planKey];
+            if (!plan) return null;
+            return (
+              <div className="bg-background rounded-xl border border-border p-6">
+                <h3 className="text-base font-bold text-foreground mb-1">
+                  Your <span className="text-primary capitalize">{plan.name}</span> Plan Coverage
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">Here's what's included and excluded in your plan.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-2">Inclusions</h4>
+                    <ul className="space-y-1.5">
+                      {plan.inclusions.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-foreground">
+                          <CheckCircle className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-red-500 uppercase tracking-wider mb-2">Exclusions</h4>
+                    <ul className="space-y-1.5">
+                      {plan.exclusions.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <XCircle className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Quick actions */}
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => router.push("/profile/onboard")}
+              className="bg-background rounded-xl border border-border p-5 text-left hover:border-primary/50 transition-colors"
+            >
+              <UserCog className="w-5 h-5 text-primary mb-2" />
+              <p className="text-sm font-semibold text-foreground">Update Personal Details</p>
+              <p className="text-xs text-muted-foreground">Edit your health information, spouse & dependants</p>
+            </button>
+            <button
+              onClick={() => router.push("/dashboard/support")}
+              className="bg-background rounded-xl border border-border p-5 text-left hover:border-primary/50 transition-colors"
+            >
+              <MessageCircleQuestion className="w-5 h-5 text-accent mb-2" />
+              <p className="text-sm font-semibold text-foreground">Get Support</p>
+              <p className="text-xs text-muted-foreground">Raise a ticket or ask a question</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Admin "Members Overview" view ───
   return (
     <div className="p-8 max-w-[1200px]">
+      {/* Plan activation status banner */}
+      {quoteStatus && quoteStatus !== "ACTIVE" && (
+        <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl border border-orange-200 bg-orange-50">
+          <Clock className="w-5 h-5 text-orange-500 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-orange-700">
+              {quoteStatus === "SUBMITTED"
+                ? "Your plan is pending activation. Our team is verifying your payment."
+                : quoteStatus === "DRAFT"
+                  ? "Your plan is not yet active. Please complete onboarding and submit payment to activate."
+                  : "Your plan status is currently: " + quoteStatus}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start justify-between mb-6">
         <h1 className="font-display text-3xl font-bold text-foreground leading-tight">
-          {isEmployee ? (
-            <>My Insurance<br />Plan Details</>
-          ) : (
-            <>Overview of Company<br />Insurance Plan Members</>
-          )}
+          Overview of Company<br />Insurance Plan Members
         </h1>
 
         {showBanner && (
@@ -214,9 +382,6 @@ export default function MembersOverview() {
               <Search className="w-4 h-4" /> Search...
             </button>
           )}
-          <button className="text-muted-foreground hover:text-foreground">
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
         </div>
         <button
           onClick={() => setAddMemberOpen(true)}
@@ -362,7 +527,7 @@ export default function MembersOverview() {
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <img src={member.avatar} alt={member.name} className="w-9 h-9 rounded-full object-cover" />
+                    <InitialsAvatar name={member.name} size="sm" />
                     <span className="text-sm font-medium text-foreground">{member.name}</span>
                   </div>
                 </td>
@@ -409,11 +574,8 @@ export default function MembersOverview() {
                       </button>
                     </PopoverTrigger>
                     <PopoverContent align="end" className="w-48 p-2">
-                      <button className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-primary">
-                        <Eye className="w-4 h-4" /> View Plan
-                      </button>
-                      <button className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-primary">
-                        <RefreshCw className="w-4 h-4" /> Request An Update
+                      <button className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-foreground">
+                        <Eye className="w-4 h-4" /> View Details
                       </button>
                       {member.status === "PENDING" && (
                         <button
@@ -422,16 +584,13 @@ export default function MembersOverview() {
                             setActionMenuOpen(null);
                           }}
                           disabled={resendInviteMutation.isPending}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-primary disabled:opacity-50"
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-foreground disabled:opacity-50"
                         >
                           <Mail className="w-4 h-4" /> Resend Invite
                         </button>
                       )}
-                      <button className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-primary">
-                        <Mail className="w-4 h-4" /> Send Remainder
-                      </button>
-                      <button className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-primary">
-                        <Ban className="w-4 h-4" /> Cancel Plan
+                      <button className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-destructive">
+                        <Trash2 className="w-4 h-4" /> Remove Employee
                       </button>
                     </PopoverContent>
                   </Popover>
@@ -449,7 +608,7 @@ export default function MembersOverview() {
           onClick={() => setCurrentPage((p) => p - 1)}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
-          ← Previous
+          &larr; Previous
         </button>
         <div className="flex items-center gap-1">
           {(() => {
@@ -490,7 +649,7 @@ export default function MembersOverview() {
           onClick={() => setCurrentPage((p) => p + 1)}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
-          Next →
+          Next &rarr;
         </button>
       </div>
     </div>

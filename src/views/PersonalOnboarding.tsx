@@ -26,8 +26,11 @@ import {
   UserPlus,
   Loader2,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
-import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
+import { CountryCombobox } from "@/components/quote/shared/CountryCombobox";
+import { StateCombobox } from "@/components/quote/shared/StateCombobox";
+import { DateInput } from "@/components/quote/shared/DateInput";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -125,9 +128,16 @@ function PersonalStepIndicator({ step }: { step: number }) {
 // Main Component
 // ---------------------------------------------------------------------------
 
+const LS_STEP_KEY = "localsurance-personal-step";
+const LS_DATA_KEY = "localsurance-personal-data";
+
 export default function PersonalOnboarding() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const isEmployee = !user?.companies || (user.companies as unknown[]).length === 0;
+
+  // Resume prompt
+  const [showResume, setShowResume] = useState(false);
 
   // Global state
   const [step, setStep] = useState(1);
@@ -176,6 +186,103 @@ export default function PersonalOnboarding() {
     createEmptyDependant("1"),
   ]);
 
+  // ─── localStorage resume support ──────────────────────────────────────────
+  // Check for saved data on mount
+  useEffect(() => {
+    try {
+      const savedStep = localStorage.getItem(LS_STEP_KEY);
+      const savedData = localStorage.getItem(LS_DATA_KEY);
+      if (savedStep && savedData && parseInt(savedStep, 10) > 1) {
+        setShowResume(true);
+      }
+    } catch {
+      // localStorage unavailable
+    }
+  }, []);
+
+  const restoreSavedData = useCallback(() => {
+    try {
+      const savedStep = localStorage.getItem(LS_STEP_KEY);
+      const savedData = localStorage.getItem(LS_DATA_KEY);
+      if (!savedStep || !savedData) return;
+      const d = JSON.parse(savedData);
+      setStep(parseInt(savedStep, 10));
+      // personal
+      if (d.firstName) setFirstName(d.firstName);
+      if (d.lastName) setLastName(d.lastName);
+      if (d.email) setEmail(d.email);
+      if (d.pdCountry) setPdCountry(d.pdCountry);
+      if (d.pdState) setPdState(d.pdState);
+      if (d.pdPostalCode) setPdPostalCode(d.pdPostalCode);
+      if (d.phone) setPhone(d.phone);
+      if (d.phoneType) setPhoneType(d.phoneType);
+      if (d.gender) setGender(d.gender);
+      if (d.dob) setDob(d.dob);
+      if (d.nationality) setNationality(d.nationality);
+      if (d.height) setHeight(d.height);
+      if (d.weight) setWeight(d.weight);
+      // family questions
+      if (d.includeSpouse !== undefined) setIncludeSpouse(d.includeSpouse);
+      if (d.includeDependant !== undefined) setIncludeDependant(d.includeDependant);
+      if (d.familyFormStep) setFamilyFormStep(d.familyFormStep);
+      // spouse
+      if (d.spFirstName) setSpFirstName(d.spFirstName);
+      if (d.spLastName) setSpLastName(d.spLastName);
+      if (d.spPreferredName) setSpPreferredName(d.spPreferredName);
+      if (d.spCountry) setSpCountry(d.spCountry);
+      if (d.spState) setSpState(d.spState);
+      if (d.spOccupation) setSpOccupation(d.spOccupation);
+      if (d.spOccupationIndustry) setSpOccupationIndustry(d.spOccupationIndustry);
+      if (d.spGender) setSpGender(d.spGender);
+      if (d.spHeight) setSpHeight(d.spHeight);
+      if (d.spWeight) setSpWeight(d.spWeight);
+      if (d.spNationality) setSpNationality(d.spNationality);
+      if (d.spDob) setSpDob(d.spDob);
+      // dependants
+      if (d.dependants && d.dependants.length > 0) setDependants(d.dependants);
+    } catch {
+      // corrupted data, ignore
+    }
+    setShowResume(false);
+  }, []);
+
+  const clearSavedData = useCallback(() => {
+    try {
+      localStorage.removeItem(LS_STEP_KEY);
+      localStorage.removeItem(LS_DATA_KEY);
+    } catch {
+      // ignore
+    }
+    setShowResume(false);
+  }, []);
+
+  // Persist to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_STEP_KEY, String(step));
+      localStorage.setItem(
+        LS_DATA_KEY,
+        JSON.stringify({
+          firstName, lastName, email, pdCountry, pdState, pdPostalCode,
+          phone, phoneType, gender, dob, nationality, height, weight,
+          includeSpouse, includeDependant, familyFormStep,
+          spFirstName, spLastName, spPreferredName, spCountry, spState,
+          spOccupation, spOccupationIndustry, spGender, spHeight, spWeight,
+          spNationality, spDob, dependants,
+        })
+      );
+    } catch {
+      // localStorage unavailable
+    }
+  }, [
+    step, firstName, lastName, email, pdCountry, pdState, pdPostalCode,
+    phone, phoneType, gender, dob, nationality, height, weight,
+    includeSpouse, includeDependant, familyFormStep,
+    spFirstName, spLastName, spPreferredName, spCountry, spState,
+    spOccupation, spOccupationIndustry, spGender, spHeight, spWeight,
+    spNationality, spDob, dependants,
+  ]);
+
   // ─── Pre-fill from auth ─────────────────────────────────────────────────────
   useEffect(() => {
     if (user) {
@@ -185,17 +292,72 @@ export default function PersonalOnboarding() {
     }
   }, [user]);
 
-  // ─── Fetch user's latest quote ──────────────────────────────────────────────
+  // ─── Fetch user's quote (admin owns it, employee is linked via employee record)
   useEffect(() => {
     async function fetchQuote() {
       try {
+        if (isEmployee) {
+          // Employee flow: fetch their own employee record to pre-fill data
+          const empMeRes = await fetch("/api/employees/me");
+          const empMeJson = await empMeRes.json();
+          if (empMeRes.ok && empMeJson.employee) {
+            const emp = empMeJson.employee;
+            setFirstName(emp.fullName?.split(" ")[0] || "");
+            setLastName(emp.fullName?.split(" ").slice(1).join(" ") || "");
+            if (emp.phone) setPhone(emp.phone);
+            if (emp.phoneType) setPhoneType(emp.phoneType);
+            if (emp.gender) setGender(emp.gender);
+            if (emp.dateOfBirth) setDob(new Date(emp.dateOfBirth).toISOString().split("T")[0]);
+            if (emp.nationality) setNationality(emp.nationality);
+            if (emp.height) setHeight(emp.height);
+            if (emp.weight) setWeight(emp.weight);
+            if (emp.country) setPdCountry(emp.country);
+            if (emp.state) setPdState(emp.state);
+            if (emp.postalCode) setPdPostalCode(emp.postalCode);
+            if (emp.includeSpouse != null) setIncludeSpouse(emp.includeSpouse);
+            if (emp.spouseFirstName) setSpFirstName(emp.spouseFirstName);
+            if (emp.spouseLastName) setSpLastName(emp.spouseLastName);
+            if (emp.spousePreferredName) setSpPreferredName(emp.spousePreferredName);
+            if (emp.spouseGender) setSpGender(emp.spouseGender);
+            if (emp.spouseDob) setSpDob(new Date(emp.spouseDob).toISOString().split("T")[0]);
+            if (emp.spouseCountry) setSpCountry(emp.spouseCountry);
+            if (emp.spouseNationality) setSpNationality(emp.spouseNationality);
+            if (emp.spouseHeight) setSpHeight(emp.spouseHeight);
+            if (emp.spouseWeight) setSpWeight(emp.spouseWeight);
+            if (emp.spouseOccupation) setSpOccupation(emp.spouseOccupation);
+            if (emp.spouseOccIndustry) setSpOccupationIndustry(emp.spouseOccIndustry);
+            if (emp.includeDependant != null) setIncludeDependant(emp.includeDependant);
+            if (emp.dependantsData && Array.isArray(emp.dependantsData) && emp.dependantsData.length > 0) {
+              setDependants(emp.dependantsData as DependantForm[]);
+            }
+            if (emp.quoteId) setQuoteId(emp.quoteId);
+          }
+          setQuoteLoading(false);
+          return;
+        }
+
+        // Admin flow: user's own quotes
         const res = await fetch("/api/quotes");
         const json = await res.json();
         if (res.ok && json.quotes && json.quotes.length > 0) {
           setQuoteId(json.quotes[0].id);
+          setQuoteLoading(false);
+          return;
+        }
+
+        // Fallback: user is an employee — find their employee record's quote
+        const empRes = await fetch("/api/employees");
+        const empJson = await empRes.json();
+        if (empRes.ok && empJson.employees && empJson.employees.length > 0) {
+          const emp = empJson.employees[0];
+          if (emp.quoteId) {
+            setQuoteId(emp.quoteId);
+            setQuoteLoading(false);
+            return;
+          }
         }
       } catch {
-        // Quote fetch failed - will show error when user tries to save
+        // Fetch failed
       } finally {
         setQuoteLoading(false);
       }
@@ -203,7 +365,7 @@ export default function PersonalOnboarding() {
     if (!authLoading) {
       fetchQuote();
     }
-  }, [authLoading]);
+  }, [authLoading, isEmployee]);
 
   // ─── Determine next family form step ────────────────────────────────────────
   const getNextFamilyStep = useCallback(
@@ -243,13 +405,47 @@ export default function PersonalOnboarding() {
       toast.error("Please enter your first and last name.");
       return;
     }
-    if (!quoteId) {
-      toast.error("No quote found. Please complete company onboarding first.");
-      return;
-    }
 
     setSaving(true);
     try {
+      if (isEmployee) {
+        const res = await fetch("/api/employees/me", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            section: "personal",
+            firstName,
+            lastName,
+            email,
+            country: pdCountry,
+            state: pdState,
+            postalCode: pdPostalCode,
+            phone,
+            phoneType,
+            gender,
+            dateOfBirth: dob,
+            nationality,
+            height,
+            weight,
+          }),
+        });
+        if (!res.ok) {
+          const j = await res.json();
+          throw new Error(j.error || "Failed to save");
+        }
+        setStep(2);
+        setSaving(false);
+        return;
+      }
+
+      if (!quoteId) {
+        // No quote linked yet — skip API save, still advance to next step
+        toast.info("Details saved locally. They'll sync once your plan is set up.");
+        setStep(2);
+        setSaving(false);
+        return;
+      }
+
       const res = await fetch("/api/planholder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -283,7 +479,7 @@ export default function PersonalOnboarding() {
   };
 
   // ─── Save family questions (Step 2) → determine which forms to show ───────
-  const handleFamilyQuestions = () => {
+  const handleFamilyQuestions = async () => {
     if (includeSpouse === null || includeDependant === null) {
       toast.error("Please answer both questions.");
       return;
@@ -291,6 +487,28 @@ export default function PersonalOnboarding() {
 
     const sp = includeSpouse;
     const dp = includeDependant;
+
+    // For employees, persist the no-spouse / no-dependants flags
+    if (isEmployee) {
+      try {
+        if (!sp) {
+          await fetch("/api/employees/me", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ section: "no-spouse" }),
+          });
+        }
+        if (!dp) {
+          await fetch("/api/employees/me", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ section: "no-dependants" }),
+          });
+        }
+      } catch {
+        // non-critical, continue
+      }
+    }
 
     if (!sp && !dp) {
       // No family members — skip to done
@@ -314,10 +532,51 @@ export default function PersonalOnboarding() {
       toast.error("Please enter your spouse's first and last name.");
       return;
     }
+
     setSaving(true);
     try {
-      const spStateOptions = STATES_BY_COUNTRY[spCountry] || [];
-      void spStateOptions; // used for reference only
+      if (isEmployee) {
+        const res = await fetch("/api/employees/me", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            section: "spouse",
+            firstName: spFirstName,
+            lastName: spLastName,
+            preferredName: spPreferredName,
+            country: spCountry,
+            gender: spGender,
+            dateOfBirth: spDob,
+            nationality: spNationality,
+            height: spHeight,
+            weight: spWeight,
+            occupation: spOccupation,
+            occupationIndustry: spOccupationIndustry,
+          }),
+        });
+        if (!res.ok) {
+          const j = await res.json();
+          throw new Error(j.error || "Failed to save");
+        }
+        const next = getNextFamilyStep("spouse");
+        if (next === "done") {
+          setStep(4);
+        } else {
+          setFamilyFormStep(next);
+        }
+        setSaving(false);
+        return;
+      }
+
+      if (!quoteId) {
+        toast.info("Details saved locally.");
+        const nextStep = getNextFamilyStep("spouse");
+        if (nextStep === "done") setStep(4);
+        else setFamilyFormStep(nextStep);
+        setSaving(false);
+        return;
+      }
+
       const res = await fetch("/api/spouse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -361,8 +620,34 @@ export default function PersonalOnboarding() {
       toast.error("Please fill in all dependant names.");
       return;
     }
+
     setSaving(true);
     try {
+      if (isEmployee) {
+        const res = await fetch("/api/employees/me", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            section: "dependants",
+            dependants,
+          }),
+        });
+        if (!res.ok) {
+          const j = await res.json();
+          throw new Error(j.error || "Failed to save");
+        }
+        setStep(4);
+        setSaving(false);
+        return;
+      }
+
+      if (!quoteId) {
+        toast.info("Details saved locally.");
+        setStep(4);
+        setSaving(false);
+        return;
+      }
+
       const res = await fetch("/api/dependants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -396,6 +681,10 @@ export default function PersonalOnboarding() {
     ]);
   };
 
+  const removeDependant = (index: number) => {
+    setDependants((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // ─── Loading state ──────────────────────────────────────────────────────────
   if (authLoading || quoteLoading) {
     return (
@@ -410,32 +699,11 @@ export default function PersonalOnboarding() {
 
   // ─── No quote found ─────────────────────────────────────────────────────────
   if (!quoteId && !quoteLoading) {
-    return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-        <div className="bg-background rounded-2xl shadow-sm border border-border p-10 max-w-md text-center">
-          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <h2 className="font-display font-extrabold text-xl text-foreground mb-2">
-            No Plan Found
-          </h2>
-          <p className="text-muted-foreground text-sm mb-6">
-            We could not find an active insurance plan. Please complete your
-            company onboarding first.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/get-quote/onboarding")}
-            className="rounded-full px-8"
-          >
-            Go to Onboarding
-          </Button>
-        </div>
-      </div>
-    );
+    // No quoteId found — still let the user fill details (save will be skipped)
+    // This handles employees whose admin hasn't completed onboarding yet
   }
 
   // ─── Computed values ────────────────────────────────────────────────────────
-  const pdStateOptions = STATES_BY_COUNTRY[pdCountry] || [];
-  const spStateOptions = STATES_BY_COUNTRY[spCountry] || [];
 
   // =========================================================================
   // STEP 1: Personal Details
@@ -496,50 +764,19 @@ export default function PersonalOnboarding() {
           <label className="text-xs text-muted-foreground mb-1 block">
             Country
           </label>
-          <Select
+          <CountryCombobox
             value={pdCountry}
-            onValueChange={(v) => {
+            onChange={(v) => {
               setPdCountry(v);
               setPdState("");
             }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select country" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
             State
           </label>
-          {pdStateOptions.length > 0 ? (
-            <Select value={pdState} onValueChange={setPdState}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select state" />
-              </SelectTrigger>
-              <SelectContent>
-                {pdStateOptions.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              value={pdState}
-              onChange={(e) => setPdState(e.target.value)}
-              placeholder="State / Province"
-              className="border-border"
-            />
-          )}
+          <StateCombobox country={pdCountry} value={pdState} onChange={setPdState} />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
@@ -626,29 +863,13 @@ export default function PersonalOnboarding() {
           <label className="text-xs text-muted-foreground mb-1 block">
             Date of birth
           </label>
-          <Input
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            placeholder="09/09/1990"
-            className="border-border"
-          />
+          <DateInput value={dob} onChange={setDob} maxDate={new Date()} placeholder="Date of birth" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
             Nationality
           </label>
-          <Select value={nationality} onValueChange={setNationality}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select nationality" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CountryCombobox value={nationality} onChange={setNationality} placeholder="Select nationality" />
         </div>
       </div>
 
@@ -859,50 +1080,19 @@ export default function PersonalOnboarding() {
           <label className="text-xs text-muted-foreground mb-1 block">
             Country
           </label>
-          <Select
+          <CountryCombobox
             value={spCountry}
-            onValueChange={(v) => {
+            onChange={(v) => {
               setSpCountry(v);
               setSpState("");
             }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select country" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
             State
           </label>
-          {spStateOptions.length > 0 ? (
-            <Select value={spState} onValueChange={setSpState}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select state" />
-              </SelectTrigger>
-              <SelectContent>
-                {spStateOptions.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              value={spState}
-              onChange={(e) => setSpState(e.target.value)}
-              placeholder="State / Province"
-              className="border-border"
-            />
-          )}
+          <StateCombobox country={spCountry} value={spState} onChange={setSpState} />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
@@ -963,12 +1153,7 @@ export default function PersonalOnboarding() {
           <label className="text-xs text-muted-foreground mb-1 block">
             Date of birth
           </label>
-          <Input
-            value={spDob}
-            onChange={(e) => setSpDob(e.target.value)}
-            placeholder="09/09/1990"
-            className="border-border"
-          />
+          <DateInput value={spDob} onChange={setSpDob} maxDate={new Date()} placeholder="Date of birth" />
         </div>
       </div>
 
@@ -1000,18 +1185,7 @@ export default function PersonalOnboarding() {
           <label className="text-xs text-muted-foreground mb-1 block">
             Nationality
           </label>
-          <Select value={spNationality} onValueChange={setSpNationality}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select nationality" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CountryCombobox value={spNationality} onChange={setSpNationality} placeholder="Select nationality" />
         </div>
       </div>
 
@@ -1046,11 +1220,23 @@ export default function PersonalOnboarding() {
       <div className="space-y-6 mb-6">
         {dependants.map((dep, i) => (
           <div key={dep.id} className="border border-border rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm text-foreground">
-                Dependant {i + 1}
-              </span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-sm text-foreground">
+                  Dependant {i + 1}
+                </span>
+              </div>
+              {dependants.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeDependant(i)}
+                  className="text-destructive hover:text-destructive/80 transition-colors p-1 rounded-md hover:bg-destructive/10"
+                  title="Remove dependant"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Row 1: Names */}
@@ -1131,34 +1317,21 @@ export default function PersonalOnboarding() {
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Date of birth
                 </label>
-                <Input
+                <DateInput
                   value={dep.dob}
-                  onChange={(e) =>
-                    updateDependant(i, { dob: e.target.value })
-                  }
-                  placeholder="09/09/2010"
-                  className="border-border"
+                  onChange={(v) => updateDependant(i, { dob: v })}
+                  maxDate={new Date()}
+                  placeholder="Date of birth"
                 />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Country of residence
                 </label>
-                <Select
+                <CountryCombobox
                   value={dep.country}
-                  onValueChange={(v) => updateDependant(i, { country: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(v) => updateDependant(i, { country: v })}
+                />
               </div>
             </div>
 
@@ -1168,23 +1341,11 @@ export default function PersonalOnboarding() {
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Nationality
                 </label>
-                <Select
+                <CountryCombobox
                   value={dep.nationality}
-                  onValueChange={(v) =>
-                    updateDependant(i, { nationality: v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select nationality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(v) => updateDependant(i, { nationality: v })}
+                  placeholder="Select nationality"
+                />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">
@@ -1392,6 +1553,31 @@ export default function PersonalOnboarding() {
 
         {/* Main content */}
         <div className="bg-background rounded-2xl shadow-sm border border-border overflow-hidden">
+          {/* Resume prompt */}
+          {showResume && (
+            <div className="bg-primary/5 border-b border-primary/20 p-4 flex items-center justify-between gap-4">
+              <p className="text-sm text-foreground">
+                You have unsaved progress. <span className="font-semibold">Resume where you left off?</span>
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearSavedData}
+                  className="rounded-full text-xs"
+                >
+                  Start Fresh
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={restoreSavedData}
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full text-xs"
+                >
+                  Resume
+                </Button>
+              </div>
+            </div>
+          )}
           {step < 4 && <PersonalStepIndicator step={step} />}
           <AnimatePresence mode="wait">
             <motion.div

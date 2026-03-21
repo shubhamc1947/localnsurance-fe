@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Upload, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, Trash2, Upload, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { Employee } from "@/types/quote";
 import { toast } from "sonner";
@@ -28,6 +28,11 @@ const Step4Employees = () => {
     updateData({ employees: updated });
   };
 
+  const removeEmployee = (index: number) => {
+    const updated = employees.filter((_, i) => i !== index);
+    updateData({ employees: updated });
+  };
+
   const addEmployee = () => {
     const newEmp: Employee = {
       id: String(employees.length + 1),
@@ -39,13 +44,27 @@ const Step4Employees = () => {
   };
 
   const handleSendInvites = async () => {
+    // Filter out employees with empty names or emails
+    const validEmployees = data.employees.filter(e => e.fullName.trim() && e.email.trim());
+    if (validEmployees.length === 0) {
+      toast.error("Please add at least one employee with a name and email");
+      return;
+    }
+
+    // Validate email format
+    const invalidEmails = validEmployees.filter(e => e.email && !e.email.includes("@"));
+    if (invalidEmails.length > 0) {
+      toast.error("Please enter valid email addresses for all employees");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          employees: data.employees,
+          employees: validEmployees,
           quoteId: data.quoteId,
           companyId: data.companyId,
         }),
@@ -82,12 +101,23 @@ const Step4Employees = () => {
                   <Users className="w-5 h-5 text-primary" />
                   <span className="font-semibold text-sm text-foreground">Employee {i + 1}</span>
                 </div>
-                {i === 0 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Add personalized message</span>
-                    <Switch checked={showPersonalizedMsg} onCheckedChange={setShowPersonalizedMsg} />
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {i === 0 && (
+                    <>
+                      <span className="text-xs text-muted-foreground">Add personalized message</span>
+                      <Switch checked={showPersonalizedMsg} onCheckedChange={setShowPersonalizedMsg} />
+                    </>
+                  )}
+                  {employees.length > 1 && (
+                    <button
+                      onClick={() => removeEmployee(i)}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors ml-1"
+                      title="Remove employee"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-4">
@@ -96,7 +126,7 @@ const Step4Employees = () => {
                   <Input
                     value={emp.fullName}
                     onChange={(e) => updateEmployee(i, { fullName: e.target.value })}
-                    placeholder="Kyle"
+                    placeholder="Full name"
                     className="border-border"
                   />
                 </div>
@@ -106,7 +136,7 @@ const Step4Employees = () => {
                     type="email"
                     value={emp.email}
                     onChange={(e) => updateEmployee(i, { email: e.target.value })}
-                    placeholder="Fisher"
+                    placeholder="email@company.com"
                     className="border-border"
                   />
                 </div>

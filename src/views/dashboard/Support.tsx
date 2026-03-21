@@ -76,7 +76,7 @@ export default function Support() {
   };
 
   const statusColor = (status: string) => {
-    switch (status.toUpperCase()) {
+    switch ((status || "").toUpperCase()) {
       case "OPEN":
         return "bg-blue-50 text-blue-700 border-blue-200";
       case "IN_PROGRESS":

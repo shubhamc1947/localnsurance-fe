@@ -6,7 +6,8 @@ export const STEPS = {
   INCLUDE_SELF: 4,
   EMPLOYEES: 5,
   START_DATE: 6,
-  SUCCESS: 7,
+  PAYMENT: 7,
+  SUCCESS: 8,
 
   // Personal onboarding sub-steps (used by StepPlanholderInfo, StepFamilyQuestions, etc.)
   PLANHOLDER: 10,
@@ -23,7 +24,7 @@ export function getVisualGroup(step: number): number {
   if (step === 3) return 2; // Company info
   if (step <= 5) return 3;  // Team setup
   if (step === 6) return 4; // Finalize
-  return 5;                  // Success
+  return 5;                  // Payment + Success
 }
 
 // Internal steps per visual group
@@ -32,7 +33,7 @@ export const VISUAL_GROUP_STEPS: Record<number, number[]> = {
   2: [3],
   3: [4, 5],
   4: [6],
-  5: [7],
+  5: [7, 8],
 };
 
 // ---------------------------------------------------------------------------

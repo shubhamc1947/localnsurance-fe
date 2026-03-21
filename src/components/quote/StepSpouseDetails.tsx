@@ -4,17 +4,12 @@ import { useState } from "react";
 import { useQuote } from "@/contexts/QuoteContext";
 import { STEPS, getNextAfterSpouse } from "@/constants/onboarding-steps";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
+import { CountryCombobox } from "@/components/quote/shared/CountryCombobox";
+import { StateCombobox } from "@/components/quote/shared/StateCombobox";
+import { DateInput } from "@/components/quote/shared/DateInput";
 
 const StepSpouseDetails = () => {
   const { data, updateData, setCurrentStep } = useQuote();
@@ -34,8 +29,6 @@ const StepSpouseDetails = () => {
   const [spWeight, setSpWeight] = useState(data.spouseWeight);
   const [spNationality, setSpNationality] = useState(data.spouseNationality);
   const [spDob, setSpDob] = useState(data.spouseDob);
-
-  const spStateOptions = STATES_BY_COUNTRY[spCountry] || [];
 
   const handleSubmitSpouse = async () => {
     setIsLoading(true);
@@ -144,48 +137,17 @@ const StepSpouseDetails = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Country</label>
-          <Select
+          <CountryCombobox
             value={spCountry}
-            onValueChange={(v) => {
+            onChange={(v) => {
               setSpCountry(v);
               setSpState("");
             }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select country" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">State</label>
-          {spStateOptions.length > 0 ? (
-            <Select value={spState} onValueChange={setSpState}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select state" />
-              </SelectTrigger>
-              <SelectContent>
-                {spStateOptions.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              value={spState}
-              onChange={(e) => setSpState(e.target.value)}
-              placeholder="State / Province"
-              className="border-border"
-            />
-          )}
+          <StateCombobox country={spCountry} value={spState} onChange={setSpState} />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Postal code</label>
@@ -269,18 +231,7 @@ const StepSpouseDetails = () => {
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Nationality</label>
-          <Select value={spNationality} onValueChange={setSpNationality}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select nationality" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CountryCombobox value={spNationality} onChange={setSpNationality} placeholder="Select nationality" />
         </div>
       </div>
 
@@ -288,12 +239,7 @@ const StepSpouseDetails = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Date of birth</label>
-          <Input
-            value={spDob}
-            onChange={(e) => setSpDob(e.target.value)}
-            placeholder="09/09/1990"
-            className="border-border"
-          />
+          <DateInput value={spDob} onChange={setSpDob} maxDate={new Date()} placeholder="Date of birth" />
         </div>
       </div>
 

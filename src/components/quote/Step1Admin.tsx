@@ -11,6 +11,7 @@ import { Check, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COUNTRIES, STATES_BY_COUNTRY, ROLES, DIAL_CODES, countryFlag } from "@/data/data";
 import { STEPS } from "@/constants/onboarding-steps";
+import { toast } from "sonner";
 
 // ─── Searchable Country Combobox ──────────────────────────────────────────────
 function CountryCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -189,6 +190,18 @@ const Step1Admin = () => {
   };
 
   const handleNext = () => {
+    if (!data.firstName || !data.lastName) {
+      toast.error("Please enter your first and last name");
+      return;
+    }
+    if (!data.email || !data.email.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    if (!data.password || data.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
     setCurrentStep(STEPS.EMAIL_VERIFY);
   };
 
@@ -229,7 +242,7 @@ const Step1Admin = () => {
             type="email"
             value={data.email}
             onChange={(e) => updateData({ email: e.target.value })}
-            placeholder="amir@stealthstartup.com"
+            placeholder="you@company.com"
             className="border-border"
           />
         </div>

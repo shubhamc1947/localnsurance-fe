@@ -79,6 +79,7 @@ export async function GET(request: NextRequest) {
       employeeCount: c._count.employees,
       quoteCount: c._count.quotes,
       status: c.quotes[0]?.status || "DRAFT",
+      isActive: (c as Record<string, unknown>).isActive ?? true,
       createdAt: c.createdAt,
     }));
 

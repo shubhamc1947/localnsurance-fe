@@ -12,10 +12,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, UserPlus } from "lucide-react";
+import { ArrowLeft, Users, UserPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { COUNTRIES } from "@/data/data";
 import { DependantFormData } from "@/types/quote";
+import { CountryCombobox } from "@/components/quote/shared/CountryCombobox";
+import { DateInput } from "@/components/quote/shared/DateInput";
 
 function createEmptyDependant(id: string): DependantFormData {
   return {
@@ -60,6 +61,10 @@ const StepDependantDetails = () => {
     ]);
   };
 
+  const removeDependant = (index: number) => {
+    setDependants((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
@@ -100,11 +105,23 @@ const StepDependantDetails = () => {
         {dependants.map((dep, i) => (
           <div key={dep.id} className="border border-border rounded-xl p-5">
             {/* Card header */}
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm text-foreground">
-                Dependant {i + 1}
-              </span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-sm text-foreground">
+                  Dependant {i + 1}
+                </span>
+              </div>
+              {dependants.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeDependant(i)}
+                  className="text-destructive hover:text-destructive/80 transition-colors p-1 rounded-md hover:bg-destructive/10"
+                  title="Remove dependant"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Row 1: Names */}
@@ -116,7 +133,7 @@ const StepDependantDetails = () => {
                 <Input
                   value={dep.fullName}
                   onChange={(e) => updateDependant(i, { fullName: e.target.value })}
-                  placeholder="Kyle"
+                  placeholder="Full name"
                   className="border-border"
                 />
               </div>
@@ -177,32 +194,21 @@ const StepDependantDetails = () => {
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Date of birth
                 </label>
-                <Input
+                <DateInput
                   value={dep.dob}
-                  onChange={(e) => updateDependant(i, { dob: e.target.value })}
-                  placeholder="09/09/2010"
-                  className="border-border"
+                  onChange={(v) => updateDependant(i, { dob: v })}
+                  maxDate={new Date()}
+                  placeholder="Date of birth"
                 />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Country of residence
                 </label>
-                <Select
+                <CountryCombobox
                   value={dep.country}
-                  onValueChange={(v) => updateDependant(i, { country: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(v) => updateDependant(i, { country: v })}
+                />
               </div>
             </div>
 
@@ -212,21 +218,11 @@ const StepDependantDetails = () => {
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Nationality
                 </label>
-                <Select
+                <CountryCombobox
                   value={dep.nationality}
-                  onValueChange={(v) => updateDependant(i, { nationality: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select nationality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(v) => updateDependant(i, { nationality: v })}
+                  placeholder="Select nationality"
+                />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Height</label>

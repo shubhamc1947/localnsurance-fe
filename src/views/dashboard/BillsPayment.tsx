@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Filter, ArrowDownUp, ChevronDown, Info, Loader2 } from "lucide-react";
+import { Search, Filter, ArrowDownUp, ChevronDown, Info, Loader2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 
 type InvoiceStatus = "PAID" | "UNPAID" | "DRAFT";
 
@@ -22,7 +23,6 @@ interface Invoice {
 
 interface EmployeePlan {
   name: string;
-  avatar: string;
   plan: string;
   price: string | null;
   status?: string;
@@ -32,7 +32,6 @@ interface EmployeePlan {
 function mapToEmployeePlan(emp: any): EmployeePlan {
   return {
     name: emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || "Unknown",
-    avatar: "/images/testimonial-avatar.jpg",
     plan: emp.planName || emp.plan || "BASIC",
     price: emp.annualCost != null ? `$${Number(emp.annualCost).toLocaleString()}` : null,
     status: emp.status === "PENDING" ? "PENDING" : undefined,
@@ -62,10 +61,11 @@ const statusColors: Record<InvoiceStatus, string> = {
 type TabFilter = "all" | "unpaid" | "draft";
 
 export default function BillsPayment() {
-  const { user } = useAuth();
+  const { user, latestQuote } = useAuth();
   const company = user?.companies?.[0] as { id: string; legalName?: string } | undefined;
   const companyId = company?.id;
   const companyName = company?.legalName || "";
+  const quoteStatus = latestQuote?.status || "DRAFT";
 
   const [activeTab, setActiveTab] = useState<TabFilter>("unpaid");
   const [plaidOpen, setPlaidOpen] = useState(false);
@@ -114,7 +114,7 @@ export default function BillsPayment() {
 
   const filteredInvoices = activeTab === "all"
     ? invoices
-    : invoices.filter((inv) => inv.status.toLowerCase() === activeTab);
+    : invoices.filter((inv) => (inv.status || "").toLowerCase() === activeTab);
 
   const allCount = invoices.length;
   const unpaidCount = invoices.filter((inv) => inv.status === "UNPAID").length;
@@ -144,7 +144,24 @@ export default function BillsPayment() {
               <p className="text-xs text-muted-foreground">Health Insurance Contract</p>
             </div>
           </div>
-          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          <div className="flex items-center gap-2">
+            {quoteStatus === "ACTIVE" && (
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600 border border-green-200">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Active
+              </span>
+            )}
+            {quoteStatus === "SUBMITTED" && (
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-500 border border-orange-200">
+                <Clock className="w-3.5 h-3.5" /> Pending Verification
+              </span>
+            )}
+            {quoteStatus === "DRAFT" && (
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
+                <AlertCircle className="w-3.5 h-3.5" /> Draft
+              </span>
+            )}
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          </div>
         </div>
 
         <div className="flex items-start gap-8 border-t border-border pt-4 flex-wrap">
@@ -199,7 +216,7 @@ export default function BillsPayment() {
                 <tr key={i} className="border-b border-border last:border-0">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <img src={emp.avatar} alt={emp.name} className="w-9 h-9 rounded-full object-cover" />
+                      <InitialsAvatar name={emp.name} size="sm" />
                       <span className="text-sm font-medium text-foreground">{emp.name}</span>
                     </div>
                   </td>
@@ -229,11 +246,11 @@ export default function BillsPayment() {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <p className="text-xs text-muted-foreground">Payment Schedule:</p>
-              <p className="text-sm font-semibold text-foreground">Annual Schedule</p>
+              <p className="text-sm font-semibold text-foreground">{latestQuote?.selectedPlan ? "Annual Schedule" : "\u2014"}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Payment Due Date:</p>
-              <p className="text-sm font-semibold text-foreground">March</p>
+              <p className="text-sm font-semibold text-foreground">{latestQuote?.planStartDate ? new Date(latestQuote.planStartDate).toLocaleDateString("en-US", { month: "long" }) : "\u2014"}</p>
             </div>
           </div>
           <div className="flex items-end justify-between">
@@ -245,12 +262,26 @@ export default function BillsPayment() {
                   : "$0"}
               </p>
             </div>
-            <button
-              onClick={() => setPlaidOpen(true)}
-              className="bg-primary text-primary-foreground px-8 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Make a Payment
-            </button>
+            {quoteStatus === "ACTIVE" ? (
+              <span className="flex items-center gap-1.5 bg-green-50 text-green-600 border border-green-200 px-6 py-2.5 rounded-full text-sm font-medium">
+                <CheckCircle2 className="w-4 h-4" /> Paid
+              </span>
+            ) : quoteStatus === "SUBMITTED" ? (
+              <span className="flex items-center gap-1.5 bg-orange-50 text-orange-500 border border-orange-200 px-6 py-2.5 rounded-full text-sm font-medium cursor-not-allowed">
+                <Clock className="w-4 h-4" /> Payment Pending Verification
+              </span>
+            ) : quoteStatus === "DRAFT" ? (
+              <span className="flex items-center gap-1.5 bg-muted text-muted-foreground border border-border px-6 py-2.5 rounded-full text-sm font-medium cursor-not-allowed">
+                <AlertCircle className="w-4 h-4" /> Complete Onboarding First
+              </span>
+            ) : (
+              <button
+                onClick={() => setPlaidOpen(true)}
+                className="bg-primary text-primary-foreground px-8 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Make a Payment
+              </button>
+            )}
           </div>
         </div>
       </div>

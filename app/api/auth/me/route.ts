@@ -41,6 +41,11 @@ export async function GET() {
 
     if (quote) {
       latestQuote = {
+        id: quote.id,
+        status: quote.status,
+        selectedPlan: quote.selectedPlan,
+        totalCost: quote.totalCost,
+        planStartDate: quote.planStartDate,
         planholderInfo: quote.planholderInfo
           ? {
               firstName: quote.planholderInfo.firstName,

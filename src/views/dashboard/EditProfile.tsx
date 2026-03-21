@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Trash2, ChevronDown, Users } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
 import Link from "next/link";
@@ -64,6 +65,23 @@ function formatDate(d?: string | null): string {
 
 export default function EditProfile() {
   const { user } = useAuth();
+
+  if (!user) {
+    return (
+      <div className="p-8 max-w-[1000px]">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-muted rounded w-48" />
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 bg-muted rounded-full" />
+            <div className="h-10 bg-muted rounded w-32" />
+          </div>
+          <div className="grid grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => <div key={i} className="h-10 bg-muted rounded" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getProfileFromUser = () => ({
     firstName: user?.firstName || "",
@@ -201,15 +219,7 @@ export default function EditProfile() {
 
       {/* Avatar */}
       <div className="flex items-center gap-6 mb-8">
-        <img src="/images/testimonial-avatar.jpg" alt="Profile" className="w-24 h-24 rounded-full object-cover" />
-        <div className="flex items-center gap-3">
-          <button className="bg-primary text-primary-foreground px-6 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity">
-            Change picture
-          </button>
-          <button className="flex items-center gap-2 border border-border px-6 py-2.5 rounded-full text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Delete picture <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        <InitialsAvatar name={`${profile.firstName} ${profile.lastName}`.trim() || "User"} size="xl" />
       </div>
 
       {/* Form Fields */}

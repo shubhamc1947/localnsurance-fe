@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { sendEmail } from "@/lib/email";
+import { getPlanActivatedTemplate } from "@/lib/email-templates";
 
 export async function GET(
   request: NextRequest,
@@ -109,6 +111,25 @@ export async function PUT(
         company: true,
       },
     });
+
+    // Send activation email when status changes to ACTIVE
+    if (status === "ACTIVE" && updatedQuote.user) {
+      try {
+        const html = getPlanActivatedTemplate({
+          userName: updatedQuote.user.firstName || "there",
+          companyName: updatedQuote.company?.legalName || "your company",
+          planName: (updatedQuote.selectedPlan || "standard").charAt(0).toUpperCase() + (updatedQuote.selectedPlan || "standard").slice(1),
+        });
+        await sendEmail({
+          to: updatedQuote.user.email,
+          subject: "Your Plan Has Been Activated - Localsurance",
+          html,
+        });
+      } catch (emailError) {
+        console.error("[API] Failed to send activation email:", emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json({ quote: updatedQuote });
   } catch (error) {

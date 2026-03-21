@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users,
   Building2,
@@ -8,6 +8,10 @@ import {
   DollarSign,
   TrendingUp,
   Loader2,
+  Clock,
+  UserPlus,
+  ShieldCheck,
+  CheckCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -19,12 +23,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+interface PendingQuote {
+  id: string;
+  companyName: string;
+  plan: string;
+  status: string;
+  cost: number;
+  userName: string;
+  userEmail: string;
+  createdAt: string;
+}
 
 interface AdminStats {
   totalUsers: number;
   totalCompanies: number;
   activeQuotes: number;
   totalRevenue: number;
+  totalEmployees: number;
+  monthlyNewSignups: number;
+  pendingPayments: number;
+  totalActiveCompanies: number;
+  totalDisabledCompanies: number;
   recentQuotes: {
     id: string;
     companyName: string;
@@ -33,6 +55,7 @@ interface AdminStats {
     cost: number;
     createdAt: string;
   }[];
+  pendingQuotes: PendingQuote[];
 }
 
 const statusColor = (status: string) => {
@@ -51,12 +74,36 @@ const statusColor = (status: string) => {
 };
 
 export default function AdminDashboardPage() {
+  const queryClient = useQueryClient();
+
   const { data, isLoading } = useQuery<AdminStats>({
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const res = await fetch("/api/admin/stats");
       if (!res.ok) throw new Error("Failed to fetch admin stats");
       return res.json();
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (quoteId: string) => {
+      const res = await fetch(`/api/admin/quotes/${quoteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ACTIVE" }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || "Failed to approve quote");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+      toast.success("Quote approved and plan activated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
   });
 
@@ -71,7 +118,7 @@ export default function AdminDashboardPage() {
     {
       title: "Total Companies",
       value: data?.totalCompanies ?? 0,
-      subtitle: "Active organizations",
+      subtitle: `${data?.totalActiveCompanies ?? 0} active, ${data?.totalDisabledCompanies ?? 0} disabled`,
       icon: Building2,
       color: "text-purple-600 bg-purple-50",
     },
@@ -88,6 +135,34 @@ export default function AdminDashboardPage() {
       subtitle: "Lifetime earnings",
       icon: DollarSign,
       color: "text-amber-600 bg-amber-50",
+    },
+    {
+      title: "Total Employees",
+      value: data?.totalEmployees ?? 0,
+      subtitle: "Across all companies",
+      icon: Users,
+      color: "text-indigo-600 bg-indigo-50",
+    },
+    {
+      title: "New Signups (Month)",
+      value: data?.monthlyNewSignups ?? 0,
+      subtitle: "This month",
+      icon: UserPlus,
+      color: "text-teal-600 bg-teal-50",
+    },
+    {
+      title: "Pending Payments",
+      value: data?.pendingPayments ?? 0,
+      subtitle: "Awaiting verification",
+      icon: Clock,
+      color: "text-orange-600 bg-orange-50",
+    },
+    {
+      title: "Active Companies",
+      value: data?.totalActiveCompanies ?? 0,
+      subtitle: `${data?.totalDisabledCompanies ?? 0} disabled`,
+      icon: ShieldCheck,
+      color: "text-emerald-600 bg-emerald-50",
     },
   ];
 
@@ -112,7 +187,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -133,6 +208,81 @@ export default function AdminDashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Pending Actions */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Clock className="w-5 h-5 text-orange-500" />
+            Pending Actions
+            {(data?.pendingQuotes?.length ?? 0) > 0 && (
+              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 ml-2">
+                {data?.pendingQuotes?.length}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Company</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Cost</TableHead>
+                <TableHead>Submitted</TableHead>
+                <TableHead className="w-32">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!data?.pendingQuotes || data.pendingQuotes.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-sm text-muted-foreground py-12"
+                  >
+                    No pending actions. All payments have been verified.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                data.pendingQuotes.map((quote) => (
+                  <TableRow key={quote.id} className="hover:bg-secondary/30">
+                    <TableCell className="font-medium text-foreground">
+                      {quote.companyName}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm text-foreground">{quote.userName}</p>
+                        <p className="text-xs text-muted-foreground">{quote.userEmail}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground capitalize">
+                      {quote.plan}
+                    </TableCell>
+                    <TableCell className="font-semibold text-foreground">
+                      ${quote.cost.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(quote.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        onClick={() => approveMutation.mutate(quote.id)}
+                        disabled={approveMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs gap-1"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        Approve
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Recent Quotes */}
       <Card>

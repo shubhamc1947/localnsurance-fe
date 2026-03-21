@@ -122,7 +122,7 @@ const StepPlanholderInfo = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="amir@stealthstartup.com"
+            placeholder="you@company.com"
             className="border-border"
           />
         </div>

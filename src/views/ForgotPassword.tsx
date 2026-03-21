@@ -62,7 +62,7 @@ const ForgotPassword = () => {
               <label className="text-sm text-muted-foreground mb-2 block">Your email</label>
               <Input
                 type="email"
-                placeholder="amir@stealthstartup.com"
+                placeholder="you@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-12 bg-card border-0 rounded-lg text-sm"

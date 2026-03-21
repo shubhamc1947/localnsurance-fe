@@ -26,7 +26,11 @@ export async function GET() {
       totalRevenueResult,
       totalEmployees,
       monthlyNewSignups,
+      pendingPayments,
+      totalActiveCompanies,
+      totalDisabledCompanies,
       rawRecentQuotes,
+      rawPendingQuotes,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.company.count(),
@@ -39,12 +43,24 @@ export async function GET() {
       prisma.user.count({
         where: { createdAt: { gte: startOfMonth } },
       }),
+      prisma.quote.count({ where: { status: "SUBMITTED" } }),
+      prisma.company.count({ where: { isActive: true } }),
+      prisma.company.count({ where: { isActive: false } }),
       prisma.quote.findMany({
         include: {
           company: { select: { legalName: true } },
         },
         orderBy: { createdAt: "desc" },
         take: 5,
+      }),
+      prisma.quote.findMany({
+        where: { status: "SUBMITTED" },
+        include: {
+          company: { select: { legalName: true } },
+          user: { select: { email: true, firstName: true, lastName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
       }),
     ]);
 
@@ -57,6 +73,17 @@ export async function GET() {
       createdAt: q.createdAt,
     }));
 
+    const pendingQuotes = rawPendingQuotes.map((q) => ({
+      id: q.id,
+      companyName: q.company?.legalName ?? "--",
+      plan: q.selectedPlan ?? "--",
+      cost: q.totalCost ?? 0,
+      status: q.status,
+      userName: q.user ? `${q.user.firstName} ${q.user.lastName}`.trim() : "--",
+      userEmail: q.user?.email ?? "--",
+      createdAt: q.createdAt,
+    }));
+
     return NextResponse.json({
       totalUsers,
       totalCompanies,
@@ -64,7 +91,11 @@ export async function GET() {
       totalRevenue: totalRevenueResult._sum.amount ?? 0,
       totalEmployees,
       monthlyNewSignups,
+      pendingPayments,
+      totalActiveCompanies,
+      totalDisabledCompanies,
       recentQuotes,
+      pendingQuotes,
     });
   } catch (error) {
     console.error("Error fetching admin stats:", error);

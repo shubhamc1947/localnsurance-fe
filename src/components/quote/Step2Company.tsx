@@ -3,13 +3,13 @@
 import { useQuote } from "@/contexts/QuoteContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Upload, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
 import { STEPS } from "@/constants/onboarding-steps";
+import { CountryCombobox } from "@/components/quote/shared/CountryCombobox";
+import { StateCombobox } from "@/components/quote/shared/StateCombobox";
 
 const companyTypes = [
   "Software & Design Agency",
@@ -127,7 +127,7 @@ const Step2Company = () => {
           <Input
             value={data.companyLegalName}
             onChange={(e) => updateData({ companyLegalName: e.target.value })}
-            placeholder="Stealth Startup Technology Inc."
+            placeholder="Your Company Name"
             className="border-border"
           />
         </div>
@@ -186,28 +186,18 @@ const Step2Company = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Country of residence</label>
-          <Select value={data.companyCountry} onValueChange={(v) => updateData({ companyCountry: v, companyState: "" })}>
-            <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CountryCombobox
+            value={data.companyCountry}
+            onChange={(v) => updateData({ companyCountry: v, companyState: "" })}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">State</label>
-          <Select value={data.companyState} onValueChange={(v) => updateData({ companyState: v })}>
-            <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-            <SelectContent>
-              {(STATES_BY_COUNTRY[data.companyCountry] || []).map((s) => (
-                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-              ))}
-              {!STATES_BY_COUNTRY[data.companyCountry] && (
-                <SelectItem value="other">Other</SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+          <StateCombobox
+            country={data.companyCountry}
+            value={data.companyState}
+            onChange={(v) => updateData({ companyState: v })}
+          />
         </div>
         <div className="flex items-end gap-3">
           <Button
