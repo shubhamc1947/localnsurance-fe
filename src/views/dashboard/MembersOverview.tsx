@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Filter, ArrowDownUp, MoreHorizontal, Copy, ArrowDown, X, Info, Eye, RefreshCw, Mail, Ban, Loader2 } from "lucide-react";
+import { Search, Filter, ArrowDownUp, MoreHorizontal, Copy, ArrowDown, X, Info, Eye, RefreshCw, Mail, Ban } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
@@ -177,12 +177,45 @@ export default function MembersOverview() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr>
-                <td colSpan={9} className="p-12 text-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Loading members...</p>
-                </td>
-              </tr>
+              <>
+                {[...Array(5)].map((_, i) => (
+                  <tr key={i} className="border-b border-border last:border-0">
+                    <td className="p-4">
+                      <div className="w-5 h-5 bg-muted rounded animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3 animate-pulse">
+                        <div className="w-9 h-9 bg-muted rounded-full" />
+                        <div className="space-y-1.5">
+                          <div className="h-4 bg-muted rounded w-28" />
+                          <div className="h-3 bg-muted rounded w-20" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-muted rounded w-20 animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-6 bg-muted rounded-full w-16 animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-muted rounded w-32 animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-muted rounded w-20 animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-muted rounded w-8 mx-auto animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-muted rounded w-16 animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-muted rounded w-6 animate-pulse" />
+                    </td>
+                  </tr>
+                ))}
+              </>
             ) : members.length === 0 ? (
               <tr>
                 <td colSpan={9} className="p-12 text-center text-sm text-muted-foreground">

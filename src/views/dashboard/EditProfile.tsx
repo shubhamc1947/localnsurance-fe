@@ -1,12 +1,66 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Trash2, ChevronDown } from "lucide-react";
+import { Eye, EyeOff, Trash2, ChevronDown, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
+import Link from "next/link";
+
+interface FamilyQuote {
+  planholderInfo?: {
+    firstName: string;
+    lastName: string;
+    gender?: string;
+    dateOfBirth?: string;
+    nationality?: string;
+    occupation?: string;
+    phone?: string;
+  } | null;
+  spouseInfo?: {
+    firstName: string;
+    lastName: string;
+    gender?: string;
+    dateOfBirth?: string;
+    nationality?: string;
+    occupation?: string;
+  } | null;
+  dependants?: {
+    id: string;
+    fullName: string;
+    lastName: string;
+    gender?: string;
+    dateOfBirth?: string;
+    relationshipToPlanholder?: string;
+  }[];
+}
+
+interface EmployeeRecord {
+  id: string;
+  fullName: string;
+  spouseFirstName?: string | null;
+  spouseLastName?: string | null;
+  spouseGender?: string | null;
+  spouseDob?: string | null;
+  spouseNationality?: string | null;
+  spouseOccupation?: string | null;
+  includeSpouse?: boolean | null;
+  includeDependant?: boolean | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dependantsData?: any;
+}
+
+function formatDate(d?: string | null): string {
+  if (!d) return "\u2014";
+  try {
+    return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  } catch {
+    return "\u2014";
+  }
+}
 
 export default function EditProfile() {
   const { user } = useAuth();
@@ -15,7 +69,7 @@ export default function EditProfile() {
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     email: user?.email || "",
-    country: user?.country || "United States",
+    country: user?.country || "",
     state: user?.state || "",
     postalCode: user?.postalCode || "",
     phone: user?.phone || "",
@@ -38,6 +92,30 @@ export default function EditProfile() {
     setEditingFields((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
+  // Fetch family data from /api/auth/me (extended response)
+  const { data: meData } = useQuery({
+    queryKey: ["me-family"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const familyQuote: FamilyQuote | null = meData?.latestQuote || null;
+  const employeeRecord: EmployeeRecord | null = meData?.employeeRecord || null;
+
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const companyId = (user?.companies as { id: string }[] | undefined)?.[0]?.id;
+  const isEmployee = !companyId && !isAdmin;
+
+  // Derive states from selected country
+  const countryValue = profile.country?.toLowerCase() || "";
+  const countryKey = COUNTRIES.find(
+    (c) => c.label.toLowerCase() === countryValue || c.value === countryValue
+  )?.value || "";
+  const availableStates = STATES_BY_COUNTRY[countryKey] || [];
+
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profile) => {
       const res = await fetch("/api/auth/me", {
@@ -46,12 +124,7 @@ export default function EditProfile() {
         body: JSON.stringify({
           firstName: data.firstName,
           lastName: data.lastName,
-          email: data.email,
-          country: data.country,
-          state: data.state,
-          postalCode: data.postalCode,
           phone: data.phone,
-          ...(data.password ? { password: data.password } : {}),
         }),
       });
       if (!res.ok) {
@@ -77,6 +150,50 @@ export default function EditProfile() {
     setProfile(getProfileFromUser());
     setEditingFields({});
   };
+
+  // Build spouse info for display
+  let spouseData: { name: string; gender: string; dob: string; nationality: string; occupation: string } | null = null;
+  if (isEmployee && employeeRecord?.includeSpouse && employeeRecord.spouseFirstName) {
+    spouseData = {
+      name: `${employeeRecord.spouseFirstName} ${employeeRecord.spouseLastName || ""}`.trim(),
+      gender: employeeRecord.spouseGender || "\u2014",
+      dob: formatDate(employeeRecord.spouseDob),
+      nationality: employeeRecord.spouseNationality || "\u2014",
+      occupation: employeeRecord.spouseOccupation || "\u2014",
+    };
+  } else if (familyQuote?.spouseInfo) {
+    const s = familyQuote.spouseInfo;
+    spouseData = {
+      name: `${s.firstName} ${s.lastName}`.trim(),
+      gender: s.gender || "\u2014",
+      dob: formatDate(s.dateOfBirth),
+      nationality: s.nationality || "\u2014",
+      occupation: s.occupation || "\u2014",
+    };
+  }
+
+  // Build dependants list for display
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let dependantsList: { name: string; relationship: string; gender: string; dob: string }[] = [];
+  if (isEmployee && employeeRecord?.includeDependant && employeeRecord.dependantsData) {
+    const deps = Array.isArray(employeeRecord.dependantsData) ? employeeRecord.dependantsData : [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dependantsList = deps.map((d: any) => ({
+      name: d.fullName || d.name || `${d.firstName || ""} ${d.lastName || ""}`.trim(),
+      relationship: d.relationship || d.relationshipToPlanholder || "\u2014",
+      gender: d.gender || "\u2014",
+      dob: formatDate(d.dateOfBirth || d.dob),
+    }));
+  } else if (familyQuote?.dependants && familyQuote.dependants.length > 0) {
+    dependantsList = familyQuote.dependants.map((d) => ({
+      name: `${d.fullName} ${d.lastName}`.trim(),
+      relationship: d.relationshipToPlanholder || "\u2014",
+      gender: d.gender || "\u2014",
+      dob: formatDate(d.dateOfBirth),
+    }));
+  }
+
+  const hasFamilyData = !!spouseData || dependantsList.length > 0;
 
   return (
     <div className="p-8 max-w-[1000px]">
@@ -114,7 +231,7 @@ export default function EditProfile() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm text-muted-foreground">Last name</label>
-              <button onClick={() => toggleEdit("lastName")} className="text-xs text-accent font-medium">save</button>
+              <button onClick={() => toggleEdit("lastName")} className="text-xs text-primary font-medium">change</button>
             </div>
             <Input
               value={profile.lastName}
@@ -126,12 +243,10 @@ export default function EditProfile() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm text-muted-foreground">Email</label>
-              <button onClick={() => toggleEdit("email")} className="text-xs text-primary font-medium">change</button>
             </div>
             <Input
               value={profile.email}
-              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-              disabled={!editingFields.email}
+              disabled
               className="bg-secondary/50 border-0 disabled:opacity-80"
             />
           </div>
@@ -142,44 +257,44 @@ export default function EditProfile() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm text-muted-foreground">Country of residence</label>
-              <button onClick={() => toggleEdit("country")} className="text-xs text-primary font-medium">change</button>
             </div>
-            <Select value={profile.country} onValueChange={(v) => setProfile({ ...profile, country: v })} disabled={!editingFields.country}>
+            <Select value={profile.country} disabled>
               <SelectTrigger className="bg-secondary/50 border-0">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="United States">United States</SelectItem>
-                <SelectItem value="France">France</SelectItem>
-                <SelectItem value="South Korea">South Korea</SelectItem>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.value} value={c.label}>{c.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm text-muted-foreground">State</label>
-              <button onClick={() => toggleEdit("state")} className="text-xs text-primary font-medium">change</button>
             </div>
-            <Select value={profile.state} onValueChange={(v) => setProfile({ ...profile, state: v })} disabled={!editingFields.state}>
+            <Select value={profile.state} disabled>
               <SelectTrigger className="bg-secondary/50 border-0">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Missouri">Missouri</SelectItem>
-                <SelectItem value="California">California</SelectItem>
-                <SelectItem value="New York">New York</SelectItem>
+                {availableStates.length > 0 ? (
+                  availableStates.map((s) => (
+                    <SelectItem key={s.value} value={s.label}>{s.label}</SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value={profile.state || "N/A"}>{profile.state || "N/A"}</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm text-muted-foreground">Postal code</label>
-              <button onClick={() => toggleEdit("postalCode")} className="text-xs text-primary font-medium">change</button>
             </div>
             <Input
               value={profile.postalCode}
-              onChange={(e) => setProfile({ ...profile, postalCode: e.target.value })}
-              disabled={!editingFields.postalCode}
+              disabled
               className="bg-secondary/50 border-0 disabled:opacity-80"
             />
           </div>
@@ -194,7 +309,7 @@ export default function EditProfile() {
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 bg-secondary/50 rounded-lg px-3 py-2 text-sm">
-                🇺🇸 <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                <ChevronDown className="w-3 h-3 text-muted-foreground" />
               </div>
               <Input
                 value={profile.phone}
@@ -207,14 +322,12 @@ export default function EditProfile() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm text-muted-foreground">Password</label>
-              <button onClick={() => toggleEdit("password")} className="text-xs text-primary font-medium">change</button>
             </div>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
-                value={profile.password}
-                onChange={(e) => setProfile({ ...profile, password: e.target.value })}
-                disabled={!editingFields.password}
+                value={profile.password || "********"}
+                disabled
                 className="bg-secondary/50 border-0 disabled:opacity-80 pr-10"
               />
               <button
@@ -241,6 +354,123 @@ export default function EditProfile() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Family Members Section */}
+      <div className="mt-12">
+        <div className="flex items-center gap-3 mb-6">
+          <Users className="w-5 h-5 text-primary" />
+          <h2 className="font-display text-xl font-bold text-foreground">Family Members</h2>
+        </div>
+
+        {!hasFamilyData ? (
+          <div className="bg-secondary/30 rounded-xl p-8 text-center">
+            <p className="text-sm text-muted-foreground mb-4">No family member data available yet.</p>
+            <Link
+              href="/profile/onboard"
+              className="text-sm text-primary font-medium hover:underline"
+            >
+              Add family details
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Planholder card (for admin users with quote data) */}
+            {!isEmployee && familyQuote?.planholderInfo && (
+              <div className="bg-secondary/30 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Planholder</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Name</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {familyQuote.planholderInfo.firstName} {familyQuote.planholderInfo.lastName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Gender</p>
+                    <p className="text-sm font-medium text-foreground">{familyQuote.planholderInfo.gender || "\u2014"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Date of Birth</p>
+                    <p className="text-sm font-medium text-foreground">{formatDate(familyQuote.planholderInfo.dateOfBirth)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nationality</p>
+                    <p className="text-sm font-medium text-foreground">{familyQuote.planholderInfo.nationality || "\u2014"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <p className="text-sm font-medium text-foreground">{familyQuote.planholderInfo.phone || "\u2014"}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Spouse card */}
+            {spouseData && (
+              <div className="bg-secondary/30 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Spouse</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Name</p>
+                    <p className="text-sm font-medium text-foreground">{spouseData.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Gender</p>
+                    <p className="text-sm font-medium text-foreground">{spouseData.gender}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Date of Birth</p>
+                    <p className="text-sm font-medium text-foreground">{spouseData.dob}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nationality</p>
+                    <p className="text-sm font-medium text-foreground">{spouseData.nationality}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Occupation</p>
+                    <p className="text-sm font-medium text-foreground">{spouseData.occupation}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Dependants cards */}
+            {dependantsList.map((dep, idx) => (
+              <div key={idx} className="bg-secondary/30 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Dependant {idx + 1}</h3>
+                <div className="grid grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Name</p>
+                    <p className="text-sm font-medium text-foreground">{dep.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Relationship</p>
+                    <p className="text-sm font-medium text-foreground">{dep.relationship}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Gender</p>
+                    <p className="text-sm font-medium text-foreground">{dep.gender}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Date of Birth</p>
+                    <p className="text-sm font-medium text-foreground">{dep.dob}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Manage link */}
+            <div className="pt-2">
+              <Link
+                href="/profile/onboard"
+                className="text-sm text-primary font-medium hover:underline"
+              >
+                Manage family details
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

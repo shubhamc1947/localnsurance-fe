@@ -79,7 +79,7 @@ export default function DashboardSidebar() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Your company</p>
-            <p className="text-sm font-semibold text-foreground">Stealth Startup</p>
+            <p className="text-sm font-semibold text-foreground">{(user?.companies?.[0] as { legalName?: string } | undefined)?.legalName || "My Company"}</p>
           </div>
         </div>
 

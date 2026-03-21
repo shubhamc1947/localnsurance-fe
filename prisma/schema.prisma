@@ -299,6 +299,21 @@ model ParentInfo {
   @@map("parent_info")
 }
 
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  email     String
+  userName  String   @map("user_name")
+  urgent    Boolean  @default(false)
+  category  String
+  message   String
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("support_tickets")
+}
+
 model OtpCode {
   id        String   @id @default(cuid())
   email     String

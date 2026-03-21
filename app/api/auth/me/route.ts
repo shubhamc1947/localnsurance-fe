@@ -27,7 +27,79 @@ export async function GET() {
 
     const { passwordHash, ...userWithoutPassword } = user;
 
-    return NextResponse.json({ user: userWithoutPassword });
+    // Fetch latest quote with family data (for admin/planholder users)
+    let latestQuote = null;
+    const quote = await prisma.quote.findFirst({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        planholderInfo: true,
+        spouseInfo: true,
+        dependants: true,
+      },
+    });
+
+    if (quote) {
+      latestQuote = {
+        planholderInfo: quote.planholderInfo
+          ? {
+              firstName: quote.planholderInfo.firstName,
+              lastName: quote.planholderInfo.lastName,
+              gender: quote.planholderInfo.gender,
+              dateOfBirth: quote.planholderInfo.dateOfBirth,
+              nationality: quote.planholderInfo.nationality,
+              phone: quote.planholderInfo.phone,
+            }
+          : null,
+        spouseInfo: quote.spouseInfo
+          ? {
+              firstName: quote.spouseInfo.firstName,
+              lastName: quote.spouseInfo.lastName,
+              gender: quote.spouseInfo.gender,
+              dateOfBirth: quote.spouseInfo.dateOfBirth,
+              nationality: quote.spouseInfo.nationality,
+              occupation: quote.spouseInfo.occupation,
+            }
+          : null,
+        dependants: quote.dependants.map((d) => ({
+          id: d.id,
+          fullName: d.fullName,
+          lastName: d.lastName,
+          gender: d.gender,
+          dateOfBirth: d.dateOfBirth,
+          relationshipToPlanholder: d.relationshipToPlanholder,
+        })),
+      };
+    }
+
+    // Fetch employee record (for employee users who were onboarded)
+    let employeeRecord = null;
+    const employee = await prisma.employee.findFirst({
+      where: { email: user.email },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (employee) {
+      employeeRecord = {
+        id: employee.id,
+        fullName: employee.fullName,
+        includeSpouse: employee.includeSpouse,
+        spouseFirstName: employee.spouseFirstName,
+        spouseLastName: employee.spouseLastName,
+        spouseGender: employee.spouseGender,
+        spouseDob: employee.spouseDob,
+        spouseNationality: employee.spouseNationality,
+        spouseOccupation: employee.spouseOccupation,
+        includeDependant: employee.includeDependant,
+        dependantsData: employee.dependantsData,
+      };
+    }
+
+    return NextResponse.json({
+      user: userWithoutPassword,
+      latestQuote,
+      employeeRecord,
+    });
   } catch (error) {
     console.error('[API] GET /api/auth/me - Error:', error);
     return NextResponse.json(
