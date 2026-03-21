@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import AnimatedSection from "@/components/AnimatedSection";
-import { Users, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import { Users, Shield, CheckCircle, AlertCircle, Info, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMemo } from "react";
 import WorldMap from "./WorldMap";
 import { getMemberRate, type AgeBand } from "@/data/pricingData";
@@ -25,10 +26,26 @@ const plans = [
     color: "text-foreground",
     description: "Essential coverage for cost-conscious teams",
     features: [
-      "Core medical coverage",
+      "Coverage up to $X",
       "Emergency assistance",
       "Telemedicine access",
       "Annual health check",
+    ],
+    inclusions: [
+      "Inpatient hospitalization",
+      "Emergency room visits",
+      "Basic diagnostics & lab tests",
+      "Ambulance services",
+      "Telemedicine consultations",
+      "Annual wellness checkup",
+    ],
+    exclusions: [
+      "Dental & vision care",
+      "Mental health therapy",
+      "Maternity & newborn care",
+      "Physiotherapy & rehabilitation",
+      "Pre-existing conditions (first 12 months)",
+      "Cosmetic procedures",
     ],
     highlighted: false,
   },
@@ -38,10 +55,26 @@ const plans = [
     color: "text-primary",
     description: "Comprehensive coverage for growing teams",
     features: [
-      "All Basic benefits, plus:",
+      "All included in\nthe basic plan, plus:",
       "Dental & vision care",
       "Mental health support",
       "Maternity coverage",
+    ],
+    inclusions: [
+      "Everything in Basic, plus:",
+      "Dental care (preventive & basic)",
+      "Vision care (exams & corrective lenses)",
+      "Mental health & therapy sessions",
+      "Maternity & newborn care",
+      "Specialist consultations",
+      "Physiotherapy (limited sessions)",
+    ],
+    exclusions: [
+      "Worldwide coverage (limited to plan region)",
+      "Executive health screening",
+      "Cosmetic & elective procedures",
+      "Experimental treatments",
+      "Pre-existing conditions (first 6 months)",
     ],
     highlighted: true,
   },
@@ -51,10 +84,26 @@ const plans = [
     color: "text-foreground",
     description: "Premium coverage with global benefits",
     features: [
-      "All Medium benefits, plus:",
+      "All included in\nthe medium plan, plus:",
       "Worldwide coverage",
       "Executive health program",
       "Family dependents included",
+    ],
+    inclusions: [
+      "Everything in Medium, plus:",
+      "Worldwide coverage (any hospital)",
+      "Executive health screening program",
+      "Family dependents coverage",
+      "Unlimited specialist visits",
+      "Full physiotherapy & rehab",
+      "Medical evacuation & repatriation",
+      "Second medical opinion",
+    ],
+    exclusions: [
+      "Cosmetic & elective procedures",
+      "Experimental/investigational treatments",
+      "Self-inflicted injuries",
+      "War & terrorism-related injuries",
     ],
     highlighted: false,
   },
@@ -113,11 +162,11 @@ const PricingCalculator = () => {
     amount.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
   return (
-    <section className="bg-muted/30 py-16 lg:py-24">
+    <section className="bg-muted/30 py-8 lg:py-12">
       <div className="container mx-auto px-4 lg:px-8">
         {/* Header */}
         <AnimatedSection>
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-12">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-6">
             <div>
               <h2 className="font-display font-extrabold text-3xl md:text-4xl text-foreground leading-tight">
                 What's the Cost<br />
@@ -173,13 +222,13 @@ const PricingCalculator = () => {
         </AnimatedSection>
 
         {/* Calculator Body */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left column: Steps 1 & 2 */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             {/* Step 1 - Age Groups */}
             <AnimatedSection delay={0.1}>
-              <div className="bg-background rounded-2xl p-6 shadow-sm border border-border">
-                <div className="flex items-center justify-between mb-6">
+              <div className="bg-background rounded-2xl p-5 shadow-sm border border-border">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <span className="w-8 h-8 rounded-full bg-foreground text-primary-foreground flex items-center justify-center text-sm font-bold">1.</span>
                     <h3 className="font-display font-bold text-base text-foreground">
@@ -189,7 +238,7 @@ const PricingCalculator = () => {
                   <span className="text-muted-foreground text-sm">(By age)</span>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {data.ageGroups.map((group, i) => {
                     const rate = getMemberRate(
                       group.range as AgeBand,
@@ -197,8 +246,8 @@ const PricingCalculator = () => {
                       data.selectedPlan
                     );
                     return (
-                      <div key={group.range} className="border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-3">
+                      <div key={group.range} className="border border-border rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
                           <span className="font-semibold text-sm text-foreground">{group.range}</span>
                           <Users className="w-4 h-4 text-muted-foreground" />
                         </div>
@@ -232,8 +281,8 @@ const PricingCalculator = () => {
 
             {/* Step 2 - Regions */}
             <AnimatedSection delay={0.2}>
-              <div className="bg-background rounded-2xl p-6 shadow-sm border border-border">
-                <div className="flex items-center gap-3 mb-6">
+              <div className="bg-background rounded-2xl p-5 shadow-sm border border-border">
+                <div className="flex items-center gap-3 mb-4">
                   <span className="w-8 h-8 rounded-full bg-foreground text-primary-foreground flex items-center justify-center text-sm font-bold">2.</span>
                   <h3 className="font-display font-bold text-base text-foreground">
                     Please select the regions where your remote team members are located?
@@ -251,53 +300,85 @@ const PricingCalculator = () => {
 
           {/* Right column: Step 3 - Plans */}
           <AnimatedSection delay={0.3}>
-            <div className="bg-background rounded-2xl p-6 shadow-sm border border-border">
-              <div className="flex items-center gap-3 mb-6">
+            <div className="bg-background rounded-2xl p-5 shadow-sm border border-border">
+              <div className="flex items-center gap-3 mb-4">
                 <span className="w-8 h-8 rounded-full bg-foreground text-primary-foreground flex items-center justify-center text-sm font-bold">3.</span>
                 <h3 className="font-display font-bold text-base text-foreground">Choose a plan:</h3>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {plans.map((plan) => (
-                  <button
-                    key={plan.id}
-                    onClick={() => updateData({ selectedPlan: plan.id })}
-                    className={`relative w-full text-left rounded-xl p-4 border-2 transition-all ${
-                      data.selectedPlan === plan.id
-                        ? plan.highlighted
-                          ? "border-primary bg-primary/5"
-                          : "border-accent bg-accent/5"
-                        : "border-border hover:border-muted-foreground/30"
-                    } ${plan.highlighted ? "border-dashed" : ""}`}
-                  >
-                    <div className="flex items-baseline justify-between mb-3">
-                      <span className={`font-extrabold text-sm ${plan.color}`}>{plan.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{plan.description}</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      {plan.features.map((f, i) => (
-                        <div key={i} className="flex items-start gap-1.5">
-                          {i === 0 ? (
-                            <Shield className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
-                          ) : (
-                            <CheckCircle className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          )}
-                          <span className="text-xs text-foreground whitespace-pre-line">{f}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div
-                      className={`w-full text-center py-2 rounded-full text-sm font-medium border transition-colors ${
+                  <Popover key={plan.id}>
+                    <button
+                      onClick={() => updateData({ selectedPlan: plan.id })}
+                      className={`relative w-full text-left rounded-xl p-3 border-2 transition-all ${
                         data.selectedPlan === plan.id
-                          ? "border-accent text-accent"
-                          : "border-border text-accent"
-                      }`}
+                          ? plan.highlighted
+                            ? "border-primary bg-primary/5"
+                            : "border-accent bg-accent/5"
+                          : "border-border hover:border-muted-foreground/30"
+                      } ${plan.highlighted ? "border-dashed" : ""}`}
                     >
-                      {data.selectedPlan === plan.id ? "Selected" : "Choose Plan"}
-                    </div>
-                  </button>
+                      <div className="flex items-baseline justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-extrabold text-sm ${plan.color}`}>{plan.name}</span>
+                          <PopoverTrigger asChild>
+                            <button
+                              className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Info className="w-3 h-3 text-primary" />
+                            </button>
+                          </PopoverTrigger>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">{plan.description}</span>
+                      </div>
+
+                      <PopoverContent className="w-80 p-4" side="left">
+                        <h4 className="font-bold text-sm text-foreground mb-2">Inclusions</h4>
+                        <ul className="space-y-1 mb-3">
+                          {plan.inclusions.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-foreground">
+                              <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 shrink-0" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                        <h4 className="font-bold text-sm text-foreground mb-2">Exclusions</h4>
+                        <ul className="space-y-1">
+                          {plan.exclusions.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                              <X className="w-3 h-3 text-red-400 mt-0.5 shrink-0" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </PopoverContent>
+
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        {plan.features.map((f, i) => (
+                          <div key={i} className="flex items-start gap-1.5">
+                            {i === 0 ? (
+                              <Shield className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                            ) : (
+                              <CheckCircle className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            )}
+                            <span className="text-xs text-foreground whitespace-pre-line">{f}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div
+                        className={`w-full text-center py-2 rounded-full text-sm font-medium border transition-colors ${
+                          data.selectedPlan === plan.id
+                            ? "border-accent text-accent"
+                            : "border-border text-accent"
+                        }`}
+                      >
+                        {data.selectedPlan === plan.id ? "Selected" : "Choose Plan"}
+                      </div>
+                    </button>
+                  </Popover>
                 ))}
               </div>
             </div>
