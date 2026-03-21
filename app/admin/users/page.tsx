@@ -53,7 +53,7 @@ interface UsersResponse {
 }
 
 const roleColor = (role: string) => {
-  switch (role.toUpperCase()) {
+  switch ((role || "").toUpperCase()) {
     case "SUPER_ADMIN":
       return "bg-purple-50 text-purple-700 border-purple-200";
     case "ADMIN":
@@ -66,7 +66,7 @@ const roleColor = (role: string) => {
 };
 
 const statusColor = (status: string) => {
-  switch (status.toUpperCase()) {
+  switch ((status || "").toUpperCase()) {
     case "ACTIVE":
       return "bg-green-50 text-green-700 border-green-200";
     case "INACTIVE":

@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       where.quotes = { some: { status } };
     }
 
-    const [companies, total] = await Promise.all([
+    const [rawCompanies, total] = await Promise.all([
       prisma.company.findMany({
         where,
         include: {
@@ -49,6 +49,11 @@ export async function GET(request: NextRequest) {
               lastName: true,
               role: true,
             },
+          },
+          quotes: {
+            select: { selectedPlan: true, status: true },
+            orderBy: { createdAt: "desc" },
+            take: 1,
           },
           _count: {
             select: {
@@ -63,6 +68,19 @@ export async function GET(request: NextRequest) {
       }),
       prisma.company.count({ where }),
     ]);
+
+    // Map to the shape the frontend expects
+    const companies = rawCompanies.map((c) => ({
+      id: c.id,
+      name: c.legalName,
+      ownerName: `${c.user.firstName} ${c.user.lastName}`.trim(),
+      ownerEmail: c.user.email,
+      plan: c.quotes[0]?.selectedPlan || "—",
+      employeeCount: c._count.employees,
+      quoteCount: c._count.quotes,
+      status: c.quotes[0]?.status || "DRAFT",
+      createdAt: c.createdAt,
+    }));
 
     return NextResponse.json({
       companies,

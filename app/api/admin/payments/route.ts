@@ -28,38 +28,53 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
-    const [payments, total] = await Promise.all([
-      prisma.payment.findMany({
-        where,
-        include: {
-          quote: {
-            include: {
-              company: {
-                select: {
-                  id: true,
-                  legalName: true,
-                },
-              },
-              user: {
-                select: {
-                  id: true,
-                  email: true,
-                  firstName: true,
-                  lastName: true,
+    const [rawPayments, total, completedCount, pendingCount, failedCount, revenueResult] =
+      await Promise.all([
+        prisma.payment.findMany({
+          where,
+          include: {
+            quote: {
+              include: {
+                company: {
+                  select: {
+                    id: true,
+                    legalName: true,
+                  },
                 },
               },
             },
           },
-        },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.payment.count({ where }),
-    ]);
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.payment.count({ where }),
+        prisma.payment.count({ where: { status: "COMPLETED" } }),
+        prisma.payment.count({ where: { status: "PENDING" } }),
+        prisma.payment.count({ where: { status: "FAILED" } }),
+        prisma.payment.aggregate({
+          where: { status: "COMPLETED" },
+          _sum: { amount: true },
+        }),
+      ]);
+
+    const payments = rawPayments.map((p) => ({
+      id: p.id,
+      companyName: p.quote?.company?.legalName ?? "--",
+      amount: p.amount,
+      status: p.status,
+      method: p.paymentMethod ?? "--",
+      createdAt: p.createdAt,
+    }));
 
     return NextResponse.json({
       payments,
+      stats: {
+        totalRevenue: revenueResult._sum.amount ?? 0,
+        completedCount,
+        pendingCount,
+        failedCount,
+      },
       total,
       page,
       totalPages: Math.ceil(total / limit),

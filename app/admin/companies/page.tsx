@@ -44,7 +44,8 @@ interface CompaniesResponse {
   total: number;
 }
 
-const statusColor = (status: string) => {
+const statusColor = (status?: string | null) => {
+  if (!status) return "bg-muted text-muted-foreground border-border";
   switch (status.toUpperCase()) {
     case "ACTIVE":
       return "bg-green-50 text-green-700 border-green-200";
@@ -164,7 +165,7 @@ export default function AdminCompaniesPage() {
                           variant="outline"
                           className={statusColor(company.status)}
                         >
-                          {company.status}
+                          {company.status || "DRAFT"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">

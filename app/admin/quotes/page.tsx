@@ -34,7 +34,7 @@ interface QuotesResponse {
 }
 
 const statusColor = (status: string) => {
-  switch (status.toUpperCase()) {
+  switch ((status || "").toUpperCase()) {
     case "ACTIVE":
       return "bg-green-50 text-green-700 border-green-200";
     case "DRAFT":

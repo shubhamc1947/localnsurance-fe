@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       where.role = role;
     }
 
-    const [users, total] = await Promise.all([
+    const [rawUsers, total] = await Promise.all([
       prisma.user.findMany({
         where,
         select: {
@@ -54,7 +54,10 @@ export async function GET(request: NextRequest) {
           jobRole: true,
           createdAt: true,
           updatedAt: true,
-          companies: true,
+          companies: {
+            select: { legalName: true },
+            take: 1,
+          },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -62,6 +65,17 @@ export async function GET(request: NextRequest) {
       }),
       prisma.user.count({ where }),
     ]);
+
+    const users = rawUsers.map((u) => ({
+      id: u.id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      email: u.email,
+      role: u.role,
+      companyName: u.companies[0]?.legalName ?? null,
+      status: "ACTIVE",
+      createdAt: u.createdAt,
+    }));
 
     return NextResponse.json({
       users,

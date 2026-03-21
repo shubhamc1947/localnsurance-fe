@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       where.selectedPlan = plan;
     }
 
-    const [quotes, total] = await Promise.all([
+    const [rawQuotes, total] = await Promise.all([
       prisma.quote.findMany({
         where,
         include: {
@@ -62,6 +62,9 @@ export async function GET(request: NextRequest) {
               state: true,
             },
           },
+          employees: {
+            select: { id: true },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -69,6 +72,22 @@ export async function GET(request: NextRequest) {
       }),
       prisma.quote.count({ where }),
     ]);
+
+    const quotes = rawQuotes.map((q) => {
+      const regions = Array.isArray(q.selectedRegions)
+        ? (q.selectedRegions as string[]).join(", ")
+        : "--";
+      return {
+        id: q.id,
+        companyName: q.company?.legalName ?? "--",
+        plan: q.selectedPlan ?? "--",
+        regions,
+        members: q.employees.length,
+        cost: q.totalCost ?? 0,
+        status: q.status,
+        createdAt: q.createdAt,
+      };
+    });
 
     return NextResponse.json({
       quotes,

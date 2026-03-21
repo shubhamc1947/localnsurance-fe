@@ -26,6 +26,7 @@ export async function GET() {
       totalRevenueResult,
       totalEmployees,
       monthlyNewSignups,
+      rawRecentQuotes,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.company.count(),
@@ -38,15 +39,32 @@ export async function GET() {
       prisma.user.count({
         where: { createdAt: { gte: startOfMonth } },
       }),
+      prisma.quote.findMany({
+        include: {
+          company: { select: { legalName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
     ]);
+
+    const recentQuotes = rawRecentQuotes.map((q) => ({
+      id: q.id,
+      companyName: q.company?.legalName ?? "--",
+      plan: q.selectedPlan ?? "--",
+      cost: q.totalCost ?? 0,
+      status: q.status,
+      createdAt: q.createdAt,
+    }));
 
     return NextResponse.json({
       totalUsers,
       totalCompanies,
-      totalActiveQuotes,
+      activeQuotes: totalActiveQuotes,
       totalRevenue: totalRevenueResult._sum.amount ?? 0,
       totalEmployees,
       monthlyNewSignups,
+      recentQuotes,
     });
   } catch (error) {
     console.error("Error fetching admin stats:", error);

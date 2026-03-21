@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Why Choose localsurance?", href: "#about" },
@@ -14,6 +15,10 @@ const navLinks = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
+  const { user, loading } = useAuth();
+
+  const isLoggedIn = !loading && !!user;
+  const dashboardPath = user?.role === "SUPER_ADMIN" ? "/admin" : "/dashboard/members";
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-md">
@@ -57,14 +62,25 @@ const Navbar = () => {
           ))}
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push("/login")}
-          className="hidden lg:inline-flex rounded-full px-6 text-sm font-medium border-primary text-primary bg-[#D0E3FF] hover:bg-primary hover:text-primary-foreground"
-        >
-          Sign In
-        </Button>
+        {isLoggedIn ? (
+          <Button
+            size="sm"
+            onClick={() => router.push(dashboardPath)}
+            className="hidden lg:inline-flex rounded-full px-6 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/login")}
+            className="hidden lg:inline-flex rounded-full px-6 text-sm font-medium border-primary text-primary bg-[#D0E3FF] hover:bg-primary hover:text-primary-foreground"
+          >
+            Sign In
+          </Button>
+        )}
 
         <button
           className="lg:hidden text-foreground"
@@ -85,13 +101,25 @@ const Navbar = () => {
               {link.label}
             </a>
           ))}
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3 rounded-full px-6 border-primary text-primary"
-          >
-            Sign In
-          </Button>
+          {isLoggedIn ? (
+            <Button
+              size="sm"
+              onClick={() => { router.push(dashboardPath); setMobileOpen(false); }}
+              className="mt-3 rounded-full px-6 bg-primary text-primary-foreground gap-2"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Dashboard
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { router.push("/login"); setMobileOpen(false); }}
+              className="mt-3 rounded-full px-6 border-primary text-primary"
+            >
+              Sign In
+            </Button>
+          )}
         </div>
       )}
     </nav>
