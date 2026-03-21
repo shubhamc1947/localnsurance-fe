@@ -134,7 +134,9 @@ const LS_DATA_KEY = "localsurance-personal-data";
 export default function PersonalOnboarding() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const isEmployee = !user?.companies || (user.companies as unknown[]).length === 0;
+  // Determine if user is employee or admin — only after auth is loaded
+  // Admin = has companies, Employee = no companies
+  const isEmployee = !authLoading && !!user && (!user.companies || (user.companies as unknown[]).length === 0);
 
   // Resume prompt
   const [showResume, setShowResume] = useState(false);
@@ -296,7 +298,7 @@ export default function PersonalOnboarding() {
   useEffect(() => {
     async function fetchQuote() {
       try {
-        if (isEmployee) {
+        if (isEmployee && !quoteId) {
           // Employee flow: fetch their own employee record to pre-fill data
           const empMeRes = await fetch("/api/employees/me");
           const empMeJson = await empMeRes.json();
@@ -408,7 +410,9 @@ export default function PersonalOnboarding() {
 
     setSaving(true);
     try {
-      if (isEmployee) {
+      // Use employee API only if truly an employee (no companies AND no quoteId from own quotes)
+      const useEmployeeApi = isEmployee && !quoteId;
+      if (useEmployeeApi) {
         const res = await fetch("/api/employees/me", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -489,7 +493,7 @@ export default function PersonalOnboarding() {
     const dp = includeDependant;
 
     // For employees, persist the no-spouse / no-dependants flags
-    if (isEmployee) {
+    if (isEmployee && !quoteId) {
       try {
         if (!sp) {
           await fetch("/api/employees/me", {
@@ -535,7 +539,7 @@ export default function PersonalOnboarding() {
 
     setSaving(true);
     try {
-      if (isEmployee) {
+      if (isEmployee && !quoteId) {
         const res = await fetch("/api/employees/me", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -623,7 +627,7 @@ export default function PersonalOnboarding() {
 
     setSaving(true);
     try {
-      if (isEmployee) {
+      if (isEmployee && !quoteId) {
         const res = await fetch("/api/employees/me", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
