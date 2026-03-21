@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
   try {
+    console.log('[API] GET /api/dashboard/stats - Request');
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -84,7 +85,7 @@ export async function GET() {
       recentInvoices,
     });
   } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
+    console.error('[API] GET /api/dashboard/stats - Error:', error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

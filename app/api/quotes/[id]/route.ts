@@ -13,6 +13,7 @@ export async function GET(
     }
 
     const { id } = await params;
+    console.log('[API] GET /api/quotes/[id] - Request', { id });
 
     const quote = await prisma.quote.findUnique({
       where: { id },
@@ -29,7 +30,7 @@ export async function GET(
 
     return NextResponse.json({ quote });
   } catch (error) {
-    console.error("Error fetching quote:", error);
+    console.error('[API] GET /api/quotes/[id] - Error:', error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -48,6 +49,7 @@ export async function PUT(
     }
 
     const { id } = await params;
+    console.log('[API] PUT /api/quotes/[id] - Request', { id });
 
     const existingQuote = await prisma.quote.findUnique({
       where: { id },
@@ -70,6 +72,9 @@ export async function PUT(
       totalCost,
       companyId,
       status,
+      includeSpouse,
+      includeDependant,
+      planStartDate,
     } = body;
 
     const quote = await prisma.quote.update({
@@ -82,13 +87,16 @@ export async function PUT(
         ...(totalCost !== undefined && { totalCost }),
         ...(companyId !== undefined && { companyId }),
         ...(status !== undefined && { status }),
+        ...(includeSpouse !== undefined && { includeSpouse }),
+        ...(includeDependant !== undefined && { includeDependant }),
+        ...(planStartDate !== undefined && { planStartDate }),
       },
       include: { company: true },
     });
 
     return NextResponse.json({ quote });
   } catch (error) {
-    console.error("Error updating quote:", error);
+    console.error('[API] PUT /api/quotes/[id] - Error:', error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

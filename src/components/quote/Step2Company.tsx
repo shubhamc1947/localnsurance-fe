@@ -9,6 +9,7 @@ import { Upload, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
+import { STEPS } from "@/constants/onboarding-steps";
 
 const companyTypes = [
   "Software & Design Agency",
@@ -34,7 +35,7 @@ const Step2Company = () => {
 
     // If already registered, just advance to next step
     if (data.quoteId && data.companyId) {
-      setCurrentStep(3);
+      setCurrentStep(STEPS.PLANHOLDER);
       return;
     }
 
@@ -73,7 +74,7 @@ const Step2Company = () => {
         companyId: result.company.id
       });
 
-      setCurrentStep(3);
+      setCurrentStep(STEPS.PLANHOLDER);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Registration failed";
       toast.error(message);
@@ -211,7 +212,7 @@ const Step2Company = () => {
         <div className="flex items-end gap-3">
           <Button
             variant="outline"
-            onClick={() => setCurrentStep(1)}
+            onClick={() => setCurrentStep(STEPS.EMAIL_VERIFY)}
             className="rounded-full px-8 flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" /> Back

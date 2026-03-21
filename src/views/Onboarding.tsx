@@ -4,9 +4,14 @@ import { useQuote } from "@/contexts/QuoteContext";
 import OnboardingSidebar from "@/components/quote/OnboardingSidebar";
 import StepIndicator from "@/components/quote/StepIndicator";
 import Step1Admin from "@/components/quote/Step1Admin";
+import StepEmailVerify from "@/components/quote/StepEmailVerify";
 import Step2Company from "@/components/quote/Step2Company";
-import Step3Success from "@/components/quote/Step3Success";
+import StepPlanholderInfo from "@/components/quote/StepPlanholderInfo";
+import StepSpouseDetails from "@/components/quote/StepSpouseDetails";
+import StepDependantDetails from "@/components/quote/StepDependantDetails";
 import Step4Employees from "@/components/quote/Step4Employees";
+import StepStartDate from "@/components/quote/StepStartDate";
+import { STEPS } from "@/constants/onboarding-steps";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,15 +29,23 @@ const Onboarding = () => {
 
   const renderStep = () => {
     switch (currentStep) {
-      case 1:
+      case STEPS.ADMIN:
         return <Step1Admin />;
-      case 2:
+      case STEPS.EMAIL_VERIFY:
+        return <StepEmailVerify />;
+      case STEPS.COMPANY:
         return <Step2Company />;
-      case 3:
-        return <Step3Success />;
-      case 4:
+      case STEPS.PLANHOLDER:
+        return <StepPlanholderInfo />;
+      case STEPS.SPOUSE:
+        return <StepSpouseDetails />;
+      case STEPS.DEPENDANT:
+        return <StepDependantDetails />;
+      case STEPS.EMPLOYEES:
         return <Step4Employees />;
-      case 5:
+      case STEPS.START_DATE:
+        return <StepStartDate />;
+      case STEPS.SUCCESS:
         return (
           <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
             {/* 3D Checkmark */}

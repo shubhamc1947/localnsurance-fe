@@ -5,6 +5,7 @@ import { generateOTP } from "@/lib/auth";
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
+    console.log('[API] POST /api/auth/forgot-password - Request', { email });
 
     if (!email) {
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       message: "OTP sent to your email",
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    console.error('[API] POST /api/auth/forgot-password - Error:', error);
     return NextResponse.json(
       { error: "An error occurred while processing your request" },
       { status: 500 }

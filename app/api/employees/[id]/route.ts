@@ -13,6 +13,7 @@ export async function GET(
     }
 
     const { id } = await params;
+    console.log('[API] GET /api/employees/[id] - Request', { id });
 
     const employee = await prisma.employee.findUnique({
       where: { id },
@@ -33,7 +34,7 @@ export async function GET(
 
     return NextResponse.json({ employee });
   } catch (error) {
-    console.error("Error fetching employee:", error);
+    console.error('[API] GET /api/employees/[id] - Error:', error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -52,6 +53,7 @@ export async function PUT(
     }
 
     const { id } = await params;
+    console.log('[API] PUT /api/employees/[id] - Request', { id });
 
     const existingEmployee = await prisma.employee.findUnique({
       where: { id },
@@ -92,7 +94,7 @@ export async function PUT(
 
     return NextResponse.json({ employee });
   } catch (error) {
-    console.error("Error updating employee:", error);
+    console.error('[API] PUT /api/employees/[id] - Error:', error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -111,6 +113,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    console.log('[API] DELETE /api/employees/[id] - Request', { id });
 
     const existingEmployee = await prisma.employee.findUnique({
       where: { id },
@@ -132,7 +135,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Employee deleted successfully" });
   } catch (error) {
-    console.error("Error deleting employee:", error);
+    console.error('[API] DELETE /api/employees/[id] - Error:', error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

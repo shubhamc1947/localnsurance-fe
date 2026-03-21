@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
   try {
+    console.log('[API] GET /api/auth/me - Request');
     const payload = await getCurrentUser();
     if (!payload || !payload.userId) {
       return NextResponse.json(
@@ -28,7 +29,7 @@ export async function GET() {
 
     return NextResponse.json({ user: userWithoutPassword });
   } catch (error) {
-    console.error("Get current user error:", error);
+    console.error('[API] GET /api/auth/me - Error:', error);
     return NextResponse.json(
       { error: "An error occurred while fetching user" },
       { status: 500 }
@@ -38,6 +39,7 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    console.log('[API] PUT /api/auth/me - Request');
     const payload = await getCurrentUser();
     if (!payload || !payload.userId) {
       return NextResponse.json(
@@ -84,7 +86,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ user: userWithoutPassword });
   } catch (error) {
-    console.error("Update user error:", error);
+    console.error('[API] PUT /api/auth/me - Error:', error);
     return NextResponse.json(
       { error: "An error occurred while updating user" },
       { status: 500 }

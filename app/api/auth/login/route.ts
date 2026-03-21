@@ -5,6 +5,7 @@ import { verifyPassword, signJWT, setAuthCookie } from "@/lib/auth";
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
+    console.log('[API] POST /api/auth/login - Request', { email });
 
     if (!email || !password) {
       return NextResponse.json(
@@ -43,9 +44,11 @@ export async function POST(request: NextRequest) {
 
     const { passwordHash, ...userWithoutPassword } = user;
 
+    console.log('[API] POST /api/auth/login - Success', { userId: user.id, email });
+
     return NextResponse.json({ user: userWithoutPassword });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error('[API] POST /api/auth/login - Error:', error);
     return NextResponse.json(
       { error: "An error occurred during login" },
       { status: 500 }

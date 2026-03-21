@@ -10,6 +10,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COUNTRIES, STATES_BY_COUNTRY, ROLES, DIAL_CODES, countryFlag } from "@/data/data";
+import { STEPS } from "@/constants/onboarding-steps";
 
 // ─── Searchable Country Combobox ──────────────────────────────────────────────
 function CountryCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -188,7 +189,7 @@ const Step1Admin = () => {
   };
 
   const handleNext = () => {
-    setCurrentStep(2);
+    setCurrentStep(STEPS.EMAIL_VERIFY);
   };
 
   const stateLabel =

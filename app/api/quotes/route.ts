@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
   try {
+    console.log('[API] GET /api/quotes - Request');
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,7 +18,7 @@ export async function GET() {
 
     return NextResponse.json({ quotes });
   } catch (error) {
-    console.error("Error fetching quotes:", error);
+    console.error('[API] GET /api/quotes - Error:', error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -27,6 +28,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[API] POST /api/quotes - Request');
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ quote }, { status: 201 });
   } catch (error) {
-    console.error("Error creating quote:", error);
+    console.error('[API] POST /api/quotes - Error:', error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

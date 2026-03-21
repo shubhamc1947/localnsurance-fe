@@ -6,6 +6,21 @@ export interface AgeGroup {
   max: number;
 }
 
+export interface DependantFormData {
+  id: string;
+  fullName: string;
+  lastName: string;
+  preferredName: string;
+  gender: string;
+  dob: string;
+  country: string;
+  nationality: string;
+  height: string;
+  weight: string;
+  relationshipToPlanholder: string;
+  occupation: string;
+}
+
 export interface QuoteFormData {
   // Step 1 - Calculator
   ageGroups: AgeGroup[];
@@ -48,6 +63,40 @@ export interface QuoteFormData {
   // IDs returned from API after registration
   quoteId: string;
   companyId: string;
+
+  // Email verification
+  emailVerified: boolean;
+
+  // Planholder personal info
+  planholderGender: string;
+  planholderDob: string;
+  planholderNationality: string;
+  planholderHeight: string;
+  planholderWeight: string;
+  planholderPhoneType: string;
+
+  // Spouse info
+  includeSpouse: boolean | null;
+  spouseFirstName: string;
+  spouseLastName: string;
+  spousePreferredName: string;
+  spouseCountry: string;
+  spouseState: string;
+  spousePostalCode: string;
+  spouseOccupation: string;
+  spouseOccupationIndustry: string;
+  spouseGender: string;
+  spouseDob: string;
+  spouseNationality: string;
+  spouseHeight: string;
+  spouseWeight: string;
+
+  // Dependant info
+  includeDependant: boolean | null;
+  dependants: DependantFormData[];
+
+  // Start date
+  planStartDate: string;
 }
 
 export interface Employee {
@@ -93,4 +142,28 @@ export const initialQuoteData: QuoteFormData = {
   employees: [],
   quoteId: "",
   companyId: "",
+  emailVerified: false,
+  planholderGender: "",
+  planholderDob: "",
+  planholderNationality: "",
+  planholderHeight: "",
+  planholderWeight: "",
+  planholderPhoneType: "mobile",
+  includeSpouse: null,
+  spouseFirstName: "",
+  spouseLastName: "",
+  spousePreferredName: "",
+  spouseCountry: "",
+  spouseState: "",
+  spousePostalCode: "",
+  spouseOccupation: "",
+  spouseOccupationIndustry: "",
+  spouseGender: "",
+  spouseDob: "",
+  spouseNationality: "",
+  spouseHeight: "",
+  spouseWeight: "",
+  includeDependant: null,
+  dependants: [],
+  planStartDate: "",
 };

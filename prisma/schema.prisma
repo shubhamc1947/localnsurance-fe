@@ -99,11 +99,18 @@ model Quote {
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
 
-  user      User       @relation(fields: [userId], references: [id])
-  company   Company?   @relation(fields: [companyId], references: [id])
-  employees Employee[]
-  payments  Payment[]
-  invoices  Invoice[]
+  includeSpouse    Boolean?  @map("include_spouse")
+  includeDependant Boolean?  @map("include_dependant")
+  planStartDate    DateTime? @map("plan_start_date")
+
+  user           User            @relation(fields: [userId], references: [id])
+  company        Company?        @relation(fields: [companyId], references: [id])
+  employees      Employee[]
+  payments       Payment[]
+  invoices       Invoice[]
+  planholderInfo PlanholderInfo?
+  spouseInfo     SpouseInfo?
+  dependants     DependantInfo[]
 
   @@map("quotes")
 }
@@ -160,6 +167,77 @@ model Invoice {
   company Company @relation(fields: [companyId], references: [id])
 
   @@map("invoices")
+}
+
+model PlanholderInfo {
+  id          String    @id @default(cuid())
+  quoteId     String    @unique @map("quote_id")
+  userId      String    @map("user_id")
+  firstName   String    @map("first_name")
+  lastName    String    @map("last_name")
+  email       String
+  country     String?
+  state       String?
+  postalCode  String?   @map("postal_code")
+  phone       String?
+  phoneType   String?   @map("phone_type")
+  gender      String?
+  dateOfBirth DateTime? @map("date_of_birth")
+  nationality String?
+  height      String?
+  weight      String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  quote Quote @relation(fields: [quoteId], references: [id])
+
+  @@map("planholder_info")
+}
+
+model SpouseInfo {
+  id                 String    @id @default(cuid())
+  quoteId            String    @unique @map("quote_id")
+  firstName          String    @map("first_name")
+  lastName           String    @map("last_name")
+  preferredName      String?   @map("preferred_name")
+  country            String?
+  state              String?
+  postalCode         String?   @map("postal_code")
+  occupation         String?
+  occupationIndustry String?   @map("occupation_industry")
+  gender             String?
+  dateOfBirth        DateTime? @map("date_of_birth")
+  nationality        String?
+  height             String?
+  weight             String?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  quote Quote @relation(fields: [quoteId], references: [id])
+
+  @@map("spouse_info")
+}
+
+model DependantInfo {
+  id                       String    @id @default(cuid())
+  quoteId                  String    @map("quote_id")
+  fullName                 String    @map("full_name")
+  lastName                 String    @map("last_name")
+  preferredName            String?   @map("preferred_name")
+  gender                   String?
+  dateOfBirth              DateTime? @map("date_of_birth")
+  country                  String?
+  nationality              String?
+  height                   String?
+  weight                   String?
+  relationshipToPlanholder String?   @map("relationship_to_planholder")
+  occupation               String?
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  quote Quote @relation(fields: [quoteId], references: [id])
+
+  @@map("dependant_info")
 }
 
 model OtpCode {

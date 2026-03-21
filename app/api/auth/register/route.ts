@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
       includesSelf,
     } = body;
 
+    console.log('[API] POST /api/auth/register - Request', { email });
+
     if (!firstName || !lastName || !email || !password) {
       return NextResponse.json(
         { error: "First name, last name, email, and password are required" },
@@ -110,6 +112,8 @@ export async function POST(request: NextRequest) {
 
     const { passwordHash: _, ...userWithoutPassword } = result.user;
 
+    console.log('[API] POST /api/auth/register - Success', { userId: result.user.id, email });
+
     return NextResponse.json(
       {
         user: userWithoutPassword,
@@ -119,7 +123,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error('[API] POST /api/auth/register - Error:', error);
     return NextResponse.json(
       { error: "An error occurred during registration" },
       { status: 500 }

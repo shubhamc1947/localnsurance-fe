@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[API] POST /api/payments - Request');
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error processing payment:", error);
+    console.error('[API] POST /api/payments - Error:', error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

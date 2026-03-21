@@ -5,6 +5,7 @@ import { signJWT } from "@/lib/auth";
 export async function POST(request: NextRequest) {
   try {
     const { email, code } = await request.json();
+    console.log('[API] POST /api/auth/verify-otp - Request', { email });
 
     if (!email || !code) {
       return NextResponse.json(
@@ -49,9 +50,11 @@ export async function POST(request: NextRequest) {
         )
       );
 
+    console.log('[API] POST /api/auth/verify-otp - Success', { email });
+
     return NextResponse.json({ resetToken });
   } catch (error) {
-    console.error("Verify OTP error:", error);
+    console.error('[API] POST /api/auth/verify-otp - Error:', error);
     return NextResponse.json(
       { error: "An error occurred while verifying OTP" },
       { status: 500 }

@@ -5,6 +5,7 @@ import { verifyJWT, hashPassword } from "@/lib/auth";
 export async function POST(request: NextRequest) {
   try {
     const { resetToken, newPassword } = await request.json();
+    console.log('[API] POST /api/auth/reset-password - Request');
 
     if (!resetToken || !newPassword) {
       return NextResponse.json(
@@ -38,12 +39,14 @@ export async function POST(request: NextRequest) {
       data: { passwordHash },
     });
 
+    console.log('[API] POST /api/auth/reset-password - Success', { email });
+
     return NextResponse.json({
       success: true,
       message: "Password has been reset successfully",
     });
   } catch (error) {
-    console.error("Reset password error:", error);
+    console.error('[API] POST /api/auth/reset-password - Error:', error);
     return NextResponse.json(
       { error: "An error occurred while resetting password" },
       { status: 500 }
