@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/lib/auth";
+import { hashPassword, signJWT, setAuthCookie } from "@/lib/auth";
 
 // GET /api/onboard/[token] - Validate onboarding token and return employee info
 export async function GET(
@@ -109,16 +109,39 @@ export async function PUT(
 
     switch (step) {
       case 1: {
-        // Set password
+        // Set password + create User record for login
         const { password } = body;
-        if (!password || password.length < 8) {
+        if (!password || password.length < 6) {
           return NextResponse.json(
-            { error: "Password must be at least 8 characters." },
+            { error: "Password must be at least 6 characters." },
             { status: 400 }
           );
         }
         const hashed = await hashPassword(password);
         updateData = { passwordHash: hashed };
+
+        // Create a User record so the employee can log in via /api/auth/login
+        const nameParts = employee.fullName.split(" ");
+        const firstName = nameParts[0] || employee.fullName;
+        const lastName = nameParts.slice(1).join(" ") || "";
+
+        const existingUser = await prisma.user.findUnique({ where: { email: employee.email } });
+        if (!existingUser) {
+          const newUser = await prisma.user.create({
+            data: {
+              email: employee.email,
+              passwordHash: hashed,
+              firstName,
+              lastName,
+              role: "USER",
+            },
+          });
+          console.log(`[API] Created User record for employee: ${employee.email}, userId: ${newUser.id}`);
+
+          // Set auth cookie so employee is immediately logged in
+          const jwtToken = await signJWT({ userId: newUser.id, email: newUser.email, role: newUser.role });
+          await setAuthCookie(jwtToken);
+        }
         break;
       }
 
