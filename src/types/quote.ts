@@ -51,10 +51,12 @@ export interface Employee {
 
 export const initialQuoteData: QuoteFormData = {
   ageGroups: [
-    { label: "18-39", range: "18-39", count: 1, min: 1, max: 60 },
-    { label: "40-49", range: "40-49", count: 1, min: 1, max: 100 },
-    { label: "50-59", range: "50-59", count: 1, min: 1, max: 60 },
-    { label: "60-69", range: "60-69", count: 1, min: 1, max: 60 },
+    { label: "0-17", range: "0-17", count: 0, min: 0, max: 50 },
+    { label: "18-30", range: "18-30", count: 1, min: 0, max: 100 },
+    { label: "31-45", range: "31-45", count: 1, min: 0, max: 100 },
+    { label: "46-60", range: "46-60", count: 0, min: 0, max: 60 },
+    { label: "61-75", range: "61-75", count: 0, min: 0, max: 40 },
+    { label: "76+", range: "76+", count: 0, min: 0, max: 20 },
   ],
   selectedRegions: [],
   selectedPlan: null,

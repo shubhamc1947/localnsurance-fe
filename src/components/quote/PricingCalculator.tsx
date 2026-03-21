@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import AnimatedSection from "@/components/AnimatedSection";
-import { Users, Shield, CheckCircle, Info } from "lucide-react";
+import { Users, Shield, CheckCircle, AlertCircle } from "lucide-react";
 import { useMemo } from "react";
 import WorldMap from "./WorldMap";
+import { getMemberRate, type AgeBand } from "@/data/pricingData";
 
 const regions = [
   { id: "north-central-america", label: "North/Central America", x: "18%", y: "35%" },
@@ -20,24 +21,39 @@ const plans = [
     id: "basic" as const,
     name: "BASIC",
     color: "text-foreground",
-    description: "Get our starter plan for getting small scale services",
-    features: ["Coverage up to $X", "Option X", "Option X", "Option X"],
+    description: "Essential coverage for cost-conscious teams",
+    features: [
+      "Core medical coverage",
+      "Emergency assistance",
+      "Telemedicine access",
+      "Annual health check",
+    ],
     highlighted: false,
   },
   {
     id: "medium" as const,
     name: "MEDIUM",
     color: "text-primary",
-    description: "Get our starter plan for getting small scale services",
-    features: ["All included in\nthe basic plan, plus:", "Option X", "Option X", "Option X"],
+    description: "Comprehensive coverage for growing teams",
+    features: [
+      "All Basic benefits, plus:",
+      "Dental & vision care",
+      "Mental health support",
+      "Maternity coverage",
+    ],
     highlighted: true,
   },
   {
     id: "pro" as const,
     name: "PRO",
     color: "text-foreground",
-    description: "Get our starter plan for getting small scale services",
-    features: ["All included in\nthe medium plan, plus:", "Option X", "Option X", "Option X"],
+    description: "Premium coverage with global benefits",
+    features: [
+      "All Medium benefits, plus:",
+      "Worldwide coverage",
+      "Executive health program",
+      "Family dependents included",
+    ],
     highlighted: false,
   },
 ];
@@ -46,12 +62,28 @@ const PricingCalculator = () => {
   const { data, updateData, setCurrentStep } = useQuote();
   const navigate = useNavigate();
 
-  const totalMembers = useMemo(
-    () => data.ageGroups.reduce((sum, g) => sum + g.count, 0),
-    [data.ageGroups]
-  );
-  const costPerMember = 117;
-  const totalCost = totalMembers * costPerMember;
+  const { totalMembers, totalCost, costPerMember } = useMemo(() => {
+    let members = 0;
+    let cost = 0;
+
+    for (const group of data.ageGroups) {
+      members += group.count;
+      if (group.count > 0) {
+        const rate = getMemberRate(
+          group.range as AgeBand,
+          data.selectedRegions,
+          data.selectedPlan
+        );
+        cost += group.count * rate;
+      }
+    }
+
+    return {
+      totalMembers: members,
+      totalCost: cost,
+      costPerMember: members > 0 ? Math.round(cost / members) : 0,
+    };
+  }, [data.ageGroups, data.selectedRegions, data.selectedPlan]);
 
   const handleSliderChange = (index: number, value: number[]) => {
     const newGroups = [...data.ageGroups];
@@ -71,6 +103,11 @@ const PricingCalculator = () => {
     setCurrentStep(1);
     navigate("/get-quote/onboarding");
   };
+
+  const needsSelection = data.selectedRegions.length === 0 || !data.selectedPlan;
+
+  const formatCurrency = (amount: number) =>
+    amount.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
   return (
     <section className="bg-muted/30 py-16 lg:py-24">
@@ -92,21 +129,26 @@ const PricingCalculator = () => {
               <div className="bg-primary rounded-xl px-6 py-4 text-primary-foreground min-w-[200px]">
                 <p className="text-xs opacity-80">Estimated cost per member*</p>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-3xl font-extrabold">${costPerMember}*</span>
+                  <span className="text-3xl font-extrabold">
+                    {needsSelection ? "—" : `${formatCurrency(costPerMember)}*`}
+                  </span>
                   <span className="text-sm opacity-80">/ annually</span>
                 </div>
               </div>
               <div className="bg-primary rounded-xl px-6 py-4 text-primary-foreground min-w-[200px]">
                 <p className="text-xs opacity-80">Estimated for all members*</p>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-3xl font-extrabold">${totalCost}*</span>
+                  <span className="text-3xl font-extrabold">
+                    {needsSelection ? "—" : `${formatCurrency(totalCost)}*`}
+                  </span>
                   <span className="text-sm opacity-80">/ annually</span>
                 </div>
               </div>
               <div className="flex flex-col items-center gap-2">
                 <Button
                   onClick={handleGetCovered}
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10 py-3 text-base font-semibold shadow-lg"
+                  disabled={needsSelection || totalMembers === 0}
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10 py-3 text-base font-semibold shadow-lg disabled:opacity-50"
                 >
                   Get Covered
                 </Button>
@@ -116,6 +158,15 @@ const PricingCalculator = () => {
               </div>
             </div>
           </div>
+
+          {needsSelection && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/60 rounded-lg px-4 py-2 mb-6">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>
+                Select at least one <strong>region</strong> and a <strong>plan</strong> to see pricing
+              </span>
+            </div>
+          )}
         </AnimatedSection>
 
         {/* Calculator Body */}
@@ -135,30 +186,43 @@ const PricingCalculator = () => {
                   <span className="text-muted-foreground text-sm">(By age)</span>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {data.ageGroups.map((group, i) => (
-                    <div key={group.range} className="border border-border rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-semibold text-sm text-foreground">{group.range}</span>
-                        <Users className="w-4 h-4 text-muted-foreground" />
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {data.ageGroups.map((group, i) => {
+                    const rate = getMemberRate(
+                      group.range as AgeBand,
+                      data.selectedRegions,
+                      data.selectedPlan
+                    );
+                    return (
+                      <div key={group.range} className="border border-border rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-semibold text-sm text-foreground">{group.range}</span>
+                          <Users className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <p className="text-xs text-accent mb-2">
+                          {group.count} {group.count === 1 ? "person" : "people"}
+                        </p>
+                        <Slider
+                          value={[group.count]}
+                          min={group.min}
+                          max={group.max}
+                          step={1}
+                          onValueChange={(v) => handleSliderChange(i, v)}
+                          className="mb-2"
+                        />
+                        <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                          <span className="border border-accent text-accent rounded px-2 py-0.5 text-xs">
+                            {group.min} - {group.max}
+                          </span>
+                          {rate > 0 && group.count > 0 && (
+                            <span className="text-xs font-medium text-foreground">
+                              {formatCurrency(rate)}/yr
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs text-accent mb-2">How many people?</p>
-                      <Slider
-                        value={[group.count]}
-                        min={group.min}
-                        max={group.max}
-                        step={1}
-                        onValueChange={(v) => handleSliderChange(i, v)}
-                        className="mb-2"
-                      />
-                      <div className="flex justify-between text-[10px] text-muted-foreground">
-                        <span className="border border-accent text-accent rounded px-2 py-0.5 text-xs">
-                          {group.min} - {group.max}
-                        </span>
-                        {group.max > 60 && <span>{group.max}</span>}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </AnimatedSection>
@@ -195,7 +259,7 @@ const PricingCalculator = () => {
                   <button
                     key={plan.id}
                     onClick={() => updateData({ selectedPlan: plan.id })}
-                    className={`w-full text-left rounded-xl p-4 border-2 transition-all ${
+                    className={`relative w-full text-left rounded-xl p-4 border-2 transition-all ${
                       data.selectedPlan === plan.id
                         ? plan.highlighted
                           ? "border-primary bg-primary/5"
@@ -221,10 +285,6 @@ const PricingCalculator = () => {
                       ))}
                     </div>
 
-                    {plan.highlighted && (
-                      <Info className="w-4 h-4 text-primary absolute top-4 right-4" />
-                    )}
-
                     <div
                       className={`w-full text-center py-2 rounded-full text-sm font-medium border transition-colors ${
                         data.selectedPlan === plan.id
@@ -232,7 +292,7 @@ const PricingCalculator = () => {
                           : "border-border text-accent"
                       }`}
                     >
-                      Choose Plan
+                      {data.selectedPlan === plan.id ? "Selected" : "Choose Plan"}
                     </div>
                   </button>
                 ))}

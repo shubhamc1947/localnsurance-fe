@@ -58,22 +58,22 @@ const COUNTRY_REGION: Record<number, string> = {
   96: "asia-pacific", 626: "asia-pacific", 16: "asia-pacific", 184: "asia-pacific",
 };
 
-// Region colors when selected
-const REGION_COLORS: Record<string, { fill: string; hover: string; label: string }> = {
-  "north-central-america": { fill: "#3B82F6", hover: "#2563EB", label: "#1D4ED8" },
-  "south-america":         { fill: "#8B5CF6", hover: "#7C3AED", label: "#6D28D9" },
-  "europe":                { fill: "#10B981", hover: "#059669", label: "#047857" },
-  "middle-east-africa":    { fill: "#F59E0B", hover: "#D97706", label: "#B45309" },
-  "asia-pacific":          { fill: "#EF4444", hover: "#DC2626", label: "#B91C1C" },
+// Region pill colors
+const REGION_COLORS: Record<string, { fill: string; hover: string; label: string; dot: string }> = {
+  "north-central-america": { fill: "#3B82F6", hover: "#2563EB", label: "#2563EB", dot: "#93C5FD" },
+  "south-america":         { fill: "#22C55E", hover: "#16A34A", label: "#16A34A", dot: "#86EFAC" },
+  "europe":                { fill: "#14B8A6", hover: "#0D9488", label: "#0D9488", dot: "#5EEAD4" },
+  "middle-east-africa":    { fill: "#F97316", hover: "#EA580C", label: "#EA580C", dot: "#FDBA74" },
+  "asia-pacific":          { fill: "#EF4444", hover: "#DC2626", label: "#DC2626", dot: "#FCA5A5" },
 };
 
 // Marker positions [lng, lat] + label pixel width
-const REGION_MARKERS: Record<string, { coords: [number, number]; labelWidth: number }> = {
-  "north-central-america": { coords: [-95, 48],  labelWidth: 154 },
-  "south-america":         { coords: [-58, -14], labelWidth: 112 },
-  "europe":                { coords: [18, 54],   labelWidth: 64  },
-  "middle-east-africa":    { coords: [28, 4],    labelWidth: 158 },
-  "asia-pacific":          { coords: [118, 22],  labelWidth: 92  },
+const REGION_MARKERS: Record<string, { coords: [number, number]; labelWidth: number; pinCoords: [number, number] }> = {
+  "north-central-america": { coords: [-95, 48],  labelWidth: 154, pinCoords: [-100, 40] },
+  "south-america":         { coords: [-58, -14], labelWidth: 112, pinCoords: [-58, -18] },
+  "europe":                { coords: [18, 54],   labelWidth: 64,  pinCoords: [15, 50]   },
+  "middle-east-africa":    { coords: [28, 4],    labelWidth: 158, pinCoords: [25, 8]    },
+  "asia-pacific":          { coords: [118, 22],  labelWidth: 92,  pinCoords: [105, 30]  },
 };
 
 interface WorldMapProps {
@@ -83,7 +83,6 @@ interface WorldMapProps {
 }
 
 const WorldMap = ({ selectedRegions, onToggleRegion, regions }: WorldMapProps) => {
-  // memoize the region lookup for each geo
   const getRegionId = useCallback((geoId: string) => {
     const numericId = parseInt(geoId, 10);
     return COUNTRY_REGION[numericId] ?? null;
@@ -95,13 +94,27 @@ const WorldMap = ({ selectedRegions, onToggleRegion, regions }: WorldMapProps) =
     <div className="w-full space-y-3">
       {/* Map */}
       <div
-        className="relative w-full rounded-2xl overflow-hidden border border-border shadow-sm"
+        className="relative w-full rounded-2xl overflow-hidden border border-border/50"
         style={{ aspectRatio: "16/9", background: "#EFF6FF" }}
       >
         <ComposableMap
           projectionConfig={{ scale: 195, center: [20, 10] }}
           style={{ width: "100%", height: "100%" }}
         >
+          {/* SVG pattern definitions for the dotted effect */}
+          <defs>
+            {/* Default gray dot pattern */}
+            <pattern id="dots-default" width="4" height="4" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="0.8" fill="#94A3B8" opacity="0.5" />
+            </pattern>
+            {/* Colored dot patterns for each region */}
+            {Object.entries(REGION_COLORS).map(([regionId, colors]) => (
+              <pattern key={regionId} id={`dots-${regionId}`} width="4" height="4" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="0.9" fill={colors.fill} opacity="0.7" />
+              </pattern>
+            ))}
+          </defs>
+
           <Geographies geography={GEO_URL}>
             {({ geographies }) =>
               geographies
@@ -109,7 +122,6 @@ const WorldMap = ({ selectedRegions, onToggleRegion, regions }: WorldMapProps) =
               .map((geo) => {
                 const regionId = getRegionId(geo.id);
                 const isSelected = regionId ? selectedSet.has(regionId) : false;
-                const colors = regionId ? REGION_COLORS[regionId] : null;
 
                 return (
                   <Geography
@@ -118,25 +130,26 @@ const WorldMap = ({ selectedRegions, onToggleRegion, regions }: WorldMapProps) =
                     onClick={() => regionId && onToggleRegion(regionId)}
                     style={{
                       default: {
-                        fill: isSelected ? colors!.fill : "#CBD5E1",
-                        stroke: "#fff",
-                        strokeWidth: 0.4,
+                        fill: isSelected
+                          ? `url(#dots-${regionId})`
+                          : "url(#dots-default)",
+                        stroke: "none",
                         outline: "none",
                         cursor: regionId ? "pointer" : "default",
-                        transition: "fill 0.15s ease",
                       },
                       hover: {
                         fill: isSelected
-                          ? colors!.hover
-                          : regionId ? "#93C5FD" : "#CBD5E1",
-                        stroke: "#fff",
-                        strokeWidth: 0.4,
+                          ? `url(#dots-${regionId})`
+                          : regionId ? "url(#dots-default)" : "url(#dots-default)",
+                        stroke: "none",
                         outline: "none",
                         cursor: regionId ? "pointer" : "default",
-                        transition: "fill 0.15s ease",
+                        opacity: regionId ? 0.8 : 1,
                       },
                       pressed: {
-                        fill: isSelected ? colors!.hover : "#60A5FA",
+                        fill: isSelected
+                          ? `url(#dots-${regionId})`
+                          : "url(#dots-default)",
                         outline: "none",
                       },
                     }}
@@ -145,6 +158,30 @@ const WorldMap = ({ selectedRegions, onToggleRegion, regions }: WorldMapProps) =
               })
             }
           </Geographies>
+
+          {/* Location pins for selected regions */}
+          {regions.map((region) => {
+            const marker = REGION_MARKERS[region.id];
+            const isSelected = selectedSet.has(region.id);
+            const colors = REGION_COLORS[region.id];
+            if (!marker || !isSelected) return null;
+
+            return (
+              <Marker key={`pin-${region.id}`} coordinates={marker.pinCoords}>
+                <g transform="translate(-8, -24)">
+                  {/* Pin shadow */}
+                  <ellipse cx="8" cy="25" rx="4" ry="1.5" fill="rgba(0,0,0,0.15)" />
+                  {/* Pin body */}
+                  <path
+                    d="M8 0C3.58 0 0 3.58 0 8c0 5.5 8 16 8 16s8-10.5 8-16c0-4.42-3.58-8-8-8z"
+                    fill={colors.fill}
+                  />
+                  {/* Pin inner circle */}
+                  <circle cx="8" cy="8" r="3" fill="white" />
+                </g>
+              </Marker>
+            );
+          })}
 
           {/* Region pill labels */}
           {regions.map((region) => {
@@ -169,7 +206,7 @@ const WorldMap = ({ selectedRegions, onToggleRegion, regions }: WorldMapProps) =
                     x={1} y={2}
                     width={labelWidth} height={pillH}
                     rx={pillH / 2}
-                    fill="rgba(0,0,0,0.15)"
+                    fill="rgba(0,0,0,0.1)"
                   />
                   {/* Pill background */}
                   <rect
