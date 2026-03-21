@@ -1,7 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import authCrystal from "@/assets/login-left.png";
-import testimonialAvatar from "@/assets/testimonial-avatar.jpg";
 
 const testimonials = [
   {
@@ -82,7 +82,7 @@ const AuthSidebar = () => {
 
       {/* Crystal Image */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        <img src={authCrystal} alt="" className="w-full h-full object-cover" />
+        <img src="/images/login-left.png" alt="" className="w-full h-full object-cover" />
       </div>
 
       {/* Testimonial Card */}
@@ -101,7 +101,7 @@ const AuthSidebar = () => {
               </p>
               <div className="flex items-center gap-3">
                 <img
-                  src={testimonialAvatar}
+                  src="/images/testimonial-avatar.jpg"
                   alt={testimonials[activeIndex].name}
                   className="w-10 h-10 rounded-full object-cover"
                 />

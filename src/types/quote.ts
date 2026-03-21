@@ -35,11 +35,19 @@ export interface QuoteFormData {
   companyCountry: string;
   companyState: string;
 
+  // Pricing
+  costPerMember: number;
+  totalCost: number;
+
   // Step 4 - Onboarding confirmation
   includesSelf: boolean | null;
 
   // Step 5 - Add Employees
   employees: Employee[];
+
+  // IDs returned from API after registration
+  quoteId: string;
+  companyId: string;
 }
 
 export interface Employee {
@@ -79,6 +87,10 @@ export const initialQuoteData: QuoteFormData = {
   zipCode: "",
   companyCountry: "",
   companyState: "",
+  costPerMember: 0,
+  totalCost: 0,
   includesSelf: null,
   employees: [],
+  quoteId: "",
+  companyId: "",
 };

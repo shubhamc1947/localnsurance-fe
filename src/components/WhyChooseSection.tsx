@@ -1,7 +1,7 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import AnimatedSection from "./AnimatedSection";
-import whyChooseDashboard from "@/assets/why-choose-dashboard.png";
-import whyChoosePlatform from "@/assets/why-choose-platform.png";
 
 const topFeatures = [
   {
@@ -104,7 +104,7 @@ const WhyChooseSection = () => {
           <div className="grid lg:grid-cols-2 gap-6 mb-6">
             <div className="bg-card rounded-2xl overflow-hidden border border-border shadow-sm">
               <img
-                src={whyChooseDashboard}
+                src="/images/why-choose-dashboard.png"
                 alt="Insurance dashboard on tablet"
                 className="w-full h-full object-cover min-h-[300px]"
               />
@@ -157,7 +157,7 @@ const WhyChooseSection = () => {
             </div>
             <div className="bg-card rounded-2xl overflow-hidden border border-border shadow-sm">
               <img
-                src={whyChoosePlatform}
+                src="/images/why-choose-platform.png"
                 alt="Platform dashboard screenshots"
                 className="w-full h-full object-cover min-h-[300px]"
               />

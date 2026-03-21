@@ -1,11 +1,11 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import AnimatedSection from "./AnimatedSection";
-import heroTeam from "@/assets/hero-team.png";
-import heroDashboard from "@/assets/hero-dashboard.png";
 
 const HeroSection = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   return (
     <section className="relative overflow-hidden bg-background py-16 lg:py-24">
       <div className="container mx-auto px-4 lg:px-8">
@@ -22,7 +22,7 @@ const HeroSection = () => {
           </AnimatedSection>
           <AnimatedSection delay={0.25}>
             <Button
-              onClick={() => navigate("/get-quote")}
+              onClick={() => router.push("/get-quote")}
               className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10 py-3 text-base font-semibold shadow-lg"
             >
               Get A Quote
@@ -40,7 +40,7 @@ const HeroSection = () => {
             {/* Large left image */}
             <div className="relative w-full md:w-[65%] rounded-2xl overflow-hidden shadow-xl h-72 md:h-96">
               <img
-                src={heroTeam}
+                src="/images/hero-team.png"
                 alt="Team collaboration"
                 className="w-full h-full object-cover"
               />
@@ -74,7 +74,7 @@ const HeroSection = () => {
             {/* Right image */}
             <div className="relative w-full md:w-[35%] rounded-2xl overflow-hidden shadow-xl h-72 md:h-96">
               <img
-                src={heroDashboard}
+                src="/images/hero-dashboard.png"
                 alt="Modern healthcare facility"
                 className="w-full h-full object-cover"
               />

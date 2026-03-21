@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -11,7 +13,7 @@ const navLinks = [
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-md">
@@ -58,7 +60,7 @@ const Navbar = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate("/login")}
+          onClick={() => router.push("/login")}
           className="hidden lg:inline-flex rounded-full px-6 text-sm font-medium border-primary text-primary bg-[#D0E3FF] hover:bg-primary hover:text-primary-foreground"
         >
           Sign In

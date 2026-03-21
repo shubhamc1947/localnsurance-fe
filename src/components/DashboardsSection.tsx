@@ -1,12 +1,8 @@
+"use client";
+
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import AnimatedSection from "./AnimatedSection";
-import slideQuote from "@/assets/dashboard-slider-1.png";
-import slideInvoices from "@/assets/dashboard-slider-2.png";
-import slidePlanTree from "@/assets/dashboard-slider-3.png";
-import slideEmployees from "@/assets/dashboard-slider-4.png";
-import dashboard1 from "@/assets/dashboard-slider-5.png";
-import dashboard2 from "@/assets/dashboard-slider-6.png";
 
 const slides = [
   {
@@ -14,7 +10,7 @@ const slides = [
     title: "Quote Calculator",
     description: "Easily estimate the cost of health insurance for your remote team with our user-friendly Quote Calculator. Get a quick and accurate quote tailored to your specific needs in just a few clicks.",
     gradient: "from-primary to-primary/80",
-    image: slideQuote,
+    image: "/images/dashboard-slider-1.png",
     features: [
       { title: "Customizable Options:", description: "Adjust age groups, geographic locations, and plan types to see real-time pricing updates based on your selections.", color: "bg-primary/10" },
       { title: "Instant Cost Estimation:", description: "Enter team details and regions to receive an immediate quote, helping you budget effectively for your team's health coverage.", color: "bg-primary/10" },
@@ -25,7 +21,7 @@ const slides = [
     title: "Company Insurance Plan",
     description: "View and manage your company's insurance plan details, track enrollments, and monitor coverage status across your entire organization.",
     gradient: "from-primary to-accent",
-    image: dashboard1,
+    image: "/images/dashboard-slider-5.png",
     features: [
       { title: "Plan Overview:", description: "Get a comprehensive view of all active plans, enrollment status, and coverage details in one dashboard.", color: "bg-accent/10" },
       { title: "Quick Actions:", description: "Easily add members, modify plans, or request changes directly from the plan management interface.", color: "bg-accent/10" },
@@ -36,7 +32,7 @@ const slides = [
     title: "Invoices and Payments",
     description: "Manage all your insurance billing and payments effortlessly with our comprehensive Online Invoices system. Keep track of invoices, view payment schedules, and ensure transparency in your financial transactions.",
     gradient: "from-accent to-accent/70",
-    image: slideInvoices,
+    image: "/images/dashboard-slider-2.png",
     features: [
       { title: "Easy Invoice Management:", description: "Access, view, and manage all invoices directly through the platform. Track payment due dates, amounts, and status updates in one centralized location.", color: "bg-accent/10" },
       { title: "Multiple Payment Options:", description: "Pay invoices securely using various methods, including credit cards and direct debit. Enable recursive payments for automatic billing.", color: "bg-accent/10" },
@@ -47,7 +43,7 @@ const slides = [
     title: "Company Insurance Tree",
     description: "Visualize your entire organization's insurance structure with our interactive plan tree. See coverage status at every level of your company hierarchy.",
     gradient: "from-accent via-accent/80 to-primary",
-    image: dashboard2,
+    image: "/images/dashboard-slider-6.png",
     features: [
       { title: "Hierarchical View:", description: "See your entire organization's insurance coverage in a tree format, helping you identify gaps and manage renewals.", color: "bg-primary/10" },
       { title: "Interactive Management:", description: "Assign plans, view documents, and manage renewals or cancellations directly through the interface.", color: "bg-primary/10" },
@@ -58,7 +54,7 @@ const slides = [
     title: "Company Insurance Plan Tree",
     description: "Manage your entire insurance portfolio with our visual insurance plan tree. This feature allows you to view the status of each employee's insurance plan and make necessary adjustments with ease.",
     gradient: "from-accent to-accent/60",
-    image: slidePlanTree,
+    image: "/images/dashboard-slider-3.png",
     features: [
       { title: "Interactive Plan Management:", description: "Assign new plans, view detailed plan documents, and manage renewals or cancellations directly through the interactive interface.", color: "bg-accent/10" },
       { title: "Visual Hierarchical Structure:", description: "See your entire organization's insurance coverage in a tree format, helping you easily identify which employees are covered.", color: "bg-accent/10" },
@@ -69,7 +65,7 @@ const slides = [
     title: "Employees Management",
     description: "Our platform simplifies the management of your team's insurance information. From adding new members to tracking dependents, the Member Management module provides all the tools you need.",
     gradient: "from-primary to-primary/70",
-    image: slideEmployees,
+    image: "/images/dashboard-slider-4.png",
     features: [
       { title: "Easy Member Addition and Updates:", description: "Quickly add new employees or update existing member information with a few clicks. The system supports bulk uploads for onboarding large teams.", color: "bg-primary/10" },
       { title: "Dependent Coverage Tracking:", description: "Keep track of dependents covered under each employee's plan, ensuring comprehensive coverage for all eligible family members.", color: "bg-primary/10" },

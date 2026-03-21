@@ -1,7 +1,10 @@
+"use client";
+
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, Grid3X3, Network, Users, CreditCard, MessageCircleQuestion, MoreHorizontal, ChevronDown } from "lucide-react";
-import { NavLink } from "@/components/NavLink";
+import NavLink from "@/components/NavLink";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +20,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import avatarImg from "@/assets/testimonial-avatar.jpg";
 
 const insurancePlanItems = [
   { title: "Company Insurance Tree", url: "/dashboard/insurance-tree", icon: Network },
@@ -29,19 +31,20 @@ const otherItems = [
   { title: "Support", url: "/dashboard/support", icon: MessageCircleQuestion },
 ];
 
-export function DashboardSidebar() {
-  const location = useLocation();
-  const navigate = useNavigate();
+export default function DashboardSidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const [searchValue, setSearchValue] = useState("");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(true);
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => pathname === path;
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarHeader className="p-6 pb-4">
-        <div className="flex items-center gap-1 cursor-pointer" onClick={() => navigate("/")}>
+        <div className="flex items-center gap-1 cursor-pointer" onClick={() => router.push("/")}>
           <div className="flex items-center gap-1">
             {/* <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
               <span className="font-display font-bold text-primary-foreground text-xs">●</span>
@@ -164,23 +167,23 @@ export function DashboardSidebar() {
         <Popover open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
           <PopoverTrigger asChild>
             <button className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-secondary/50 transition-colors">
-              <img src={avatarImg} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
+              <img src="/images/testimonial-avatar.jpg" alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
               <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-foreground">Amir Kerim</p>
-                <p className="text-xs text-muted-foreground">amir@stealthstartup.com</p>
+                <p className="text-sm font-medium text-foreground">{user?.firstName ?? "User"}</p>
+                <p className="text-xs text-muted-foreground">{user?.email ?? ""}</p>
               </div>
               <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
             </button>
           </PopoverTrigger>
           <PopoverContent side="top" align="start" className="w-56 p-2">
             <button
-              onClick={() => { navigate("/dashboard/profile"); setProfileMenuOpen(false); }}
+              onClick={() => { router.push("/dashboard/profile"); setProfileMenuOpen(false); }}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors"
             >
               Edit Profile
             </button>
             <button
-              onClick={() => { navigate("/login"); setProfileMenuOpen(false); }}
+              onClick={() => { logout(); setProfileMenuOpen(false); }}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors text-destructive"
             >
               Logout Account

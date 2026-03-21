@@ -1,5 +1,7 @@
+"use client";
+
 import { useQuote } from "@/contexts/QuoteContext";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import AnimatedSection from "@/components/AnimatedSection";
@@ -60,7 +62,7 @@ const plans = [
 
 const PricingCalculator = () => {
   const { data, updateData, setCurrentStep } = useQuote();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const { totalMembers, totalCost, costPerMember } = useMemo(() => {
     let members = 0;
@@ -100,8 +102,9 @@ const PricingCalculator = () => {
   };
 
   const handleGetCovered = () => {
+    updateData({ costPerMember, totalCost });
     setCurrentStep(1);
-    navigate("/get-quote/onboarding");
+    router.push("/get-quote/onboarding");
   };
 
   const needsSelection = data.selectedRegions.length === 0 || !data.selectedPlan;

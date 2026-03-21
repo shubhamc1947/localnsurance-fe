@@ -1,7 +1,8 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import AnimatedSection from "./AnimatedSection";
-import dashboardMain from "@/assets/dashboard-main.jpg";
 
 const featuresList = [
   "Real-time claims tracking and management",
@@ -51,7 +52,7 @@ const FeaturesSection = () => {
             <div className="relative">
               <div className="absolute -right-4 -top-4 w-full h-full rounded-2xl bg-primary/5 -z-10" />
               <img
-                src={dashboardMain}
+                src="/images/dashboard-main.jpg"
                 alt="Platform dashboard"
                 className="rounded-2xl shadow-2xl w-full"
               />

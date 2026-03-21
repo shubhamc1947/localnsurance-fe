@@ -1,3 +1,5 @@
+"use client";
+
 import { useQuote } from "@/contexts/QuoteContext";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,11 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Upload, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { Employee } from "@/types/quote";
+import { toast } from "sonner";
 
 const Step4Employees = () => {
   const { data, updateData, setCurrentStep } = useQuote();
   const [showPersonalizedMsg, setShowPersonalizedMsg] = useState(true);
   const [csvUrl, setCsvUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize with at least one employee
   const employees = data.employees.length > 0
@@ -33,9 +37,29 @@ const Step4Employees = () => {
     updateData({ employees: [...employees, newEmp] });
   };
 
-  const handleSendInvites = () => {
-    // Future: API call to send invites
-    setCurrentStep(5);
+  const handleSendInvites = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employees: data.employees,
+          quoteId: data.quoteId,
+          companyId: data.companyId,
+        }),
+      });
+      const responseData = await res.json();
+      if (!res.ok) {
+        throw new Error(responseData.error || "Failed to send invites");
+      }
+      setCurrentStep(5);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send invites";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -149,9 +173,10 @@ const Step4Employees = () => {
 
           <Button
             onClick={handleSendInvites}
+            disabled={isLoading}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 rounded-full py-3"
           >
-            Send email invites
+            {isLoading ? "Sending invites..." : "Send email invites"}
           </Button>
         </div>
       </div>

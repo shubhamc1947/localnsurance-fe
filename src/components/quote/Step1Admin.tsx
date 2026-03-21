@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { useQuote } from "@/contexts/QuoteContext";
 import { Input } from "@/components/ui/input";

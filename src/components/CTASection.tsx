@@ -1,10 +1,11 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import AnimatedSection from "./AnimatedSection";
-import ctaDashboard from "@/assets/why-choose-dashboard.png";
 
 const CTASection = () => {
   const [form, setForm] = useState({
@@ -48,7 +49,7 @@ const CTASection = () => {
             {/* Left — image fills entire grid cell */}
             <div className="relative min-h-[320px] bg-cta-bg">
               <img
-                src={ctaDashboard}
+                src="/images/why-choose-dashboard.png"
                 alt="Analytics dashboard preview"
                 className="absolute inset-0 h-full w-full object-cover"
               />

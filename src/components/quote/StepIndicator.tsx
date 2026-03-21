@@ -1,3 +1,5 @@
+"use client";
+
 import { useQuote } from "@/contexts/QuoteContext";
 
 const StepIndicator = () => {

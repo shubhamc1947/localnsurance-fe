@@ -1,9 +1,13 @@
+"use client";
+
 import { useQuote } from "@/contexts/QuoteContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Upload, ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const companyTypes = [
   "Software & Design Agency",
@@ -20,11 +24,47 @@ const companyTypes = [
 
 const Step2Company = () => {
   const { data, updateData, setCurrentStep } = useQuote();
+  const { register } = useAuth();
   const [selectedType, setSelectedType] = useState(data.companyType);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     updateData({ companyType: selectedType });
-    setCurrentStep(3);
+    setIsLoading(true);
+    try {
+      await register({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        role: data.role,
+        phoneDialCode: data.phoneDialCode,
+        phone: data.phone,
+        country: data.country,
+        state: data.state,
+        postalCode: data.postalCode,
+        companyType: selectedType,
+        companyLegalName: data.companyLegalName,
+        website: data.website,
+        companyPhone: data.companyPhone,
+        addressLine: data.addressLine,
+        city: data.city,
+        zipCode: data.zipCode,
+        companyCountry: data.companyCountry,
+        companyState: data.companyState,
+        selectedPlan: data.selectedPlan,
+        selectedRegions: data.selectedRegions,
+        ageGroups: data.ageGroups,
+        costPerMember: data.costPerMember,
+        totalCost: data.totalCost,
+      });
+      setCurrentStep(3);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Registration failed";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -160,9 +200,10 @@ const Step2Company = () => {
           </Button>
           <Button
             onClick={handleNext}
+            disabled={isLoading}
             className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10"
           >
-            Next
+            {isLoading ? "Submitting..." : "Next"}
           </Button>
         </div>
       </div>

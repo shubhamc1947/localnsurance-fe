@@ -1,26 +1,25 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
 import AnimatedSection from "./AnimatedSection";
-import news1 from "@/assets/news-1.jpg";
-import news2 from "@/assets/news-2.jpg";
-import news3 from "@/assets/news-3.jpg";
 
 const articles = [
   {
-    image: news1,
+    image: "/images/news-1.jpg",
     date: "August 31, 2023, 10:00 AM",
     title: "Remote Health Insurance Plans and Their Benefits",
     excerpt:
       "Customize age groups, geographic locations, and coverage types to view real-time plan options and pricing based on your preferences.",
   },
   {
-    image: news2,
+    image: "/images/news-2.jpg",
     date: "August 31, 2023, 10:00 AM",
     title: "Remote Health Insurance Plans and Their Benefits",
     excerpt:
       "Customize age groups, geographic locations, and coverage types to view real-time plan options and pricing based on your preferences.",
   },
   {
-    image: news3,
+    image: "/images/news-3.jpg",
     date: "August 31, 2023, 10:00 AM",
     title: "Remote Health Insurance Plans and Their Benefits",
     excerpt:

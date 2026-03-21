@@ -1,3 +1,5 @@
+"use client";
+
 import { FOOTER_COLUMNS, FOOTER_CONTACT, FOOTER_LEGAL } from "@/data/data";
 
 const Footer = () => {

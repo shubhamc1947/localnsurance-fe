@@ -1,3 +1,5 @@
+"use client";
+
 import { useQuote } from "@/contexts/QuoteContext";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Users, ArrowLeft } from "lucide-react";

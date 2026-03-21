@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum QuoteStatus {
+  DRAFT
+  SUBMITTED
+  ACTIVE
+  EXPIRED
+}
+
+enum EmployeeStatus {
+  PENDING
+  ACTIVE
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  UNPAID
+  PAID
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  role          UserRole @default(USER)
+  phoneDialCode String?  @map("phone_dial_code")
+  phone         String?
+  country       String?
+  state         String?
+  postalCode    String?  @map("postal_code")
+  jobRole       String?  @map("job_role")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  companies Company[]
+  quotes    Quote[]
+
+  @@map("users")
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  companyType String?  @map("company_type")
+  legalName   String   @map("legal_name")
+  website     String?
+  phone       String?
+  addressLine String?  @map("address_line")
+  city        String?
+  zipCode     String?  @map("zip_code")
+  country     String?
+  state       String?
+  logoUrl     String?  @map("logo_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id])
+  quotes    Quote[]
+  employees Employee[]
+  invoices  Invoice[]
+
+  @@map("companies")
+}
+
+model Quote {
+  id              String      @id @default(cuid())
+  userId          String      @map("user_id")
+  companyId       String?     @map("company_id")
+  selectedPlan    String?     @map("selected_plan")
+  selectedRegions Json?       @map("selected_regions")
+  ageGroups       Json?       @map("age_groups")
+  costPerMember   Float?      @map("cost_per_member")
+  totalCost       Float?      @map("total_cost")
+  status          QuoteStatus @default(DRAFT)
+  includesSelf    Boolean?    @map("includes_self")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id])
+  company   Company?   @relation(fields: [companyId], references: [id])
+  employees Employee[]
+  payments  Payment[]
+  invoices  Invoice[]
+
+  @@map("quotes")
+}
+
+model Employee {
+  id                  String         @id @default(cuid())
+  quoteId             String         @map("quote_id")
+  companyId           String         @map("company_id")
+  fullName            String         @map("full_name")
+  email               String
+  personalizedMessage String?        @map("personalized_message")
+  status              EmployeeStatus @default(PENDING)
+  planStartDate       DateTime?      @map("plan_start_date")
+  planEndDate         DateTime?      @map("plan_end_date")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  quote   Quote   @relation(fields: [quoteId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("employees")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  quoteId       String        @map("quote_id")
+  amount        Float
+  currency      String        @default("USD")
+  status        PaymentStatus @default(PENDING)
+  paymentMethod String?       @map("payment_method")
+  transactionId String?       @map("transaction_id")
+  paidAt        DateTime?     @map("paid_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  quote Quote @relation(fields: [quoteId], references: [id])
+
+  @@map("payments")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  quoteId       String        @map("quote_id")
+  companyId     String        @map("company_id")
+  invoiceNumber String        @unique @map("invoice_number")
+  amount        Float
+  status        InvoiceStatus @default(DRAFT)
+  dueDate       DateTime?     @map("due_date")
+  paidAt        DateTime?     @map("paid_at")
+  coveragePlan  String?       @map("coverage_plan")
+  employeeCount Int?          @map("employee_count")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  quote   Quote   @relation(fields: [quoteId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("invoices")
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("otp_codes")
+}
