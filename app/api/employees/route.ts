@@ -41,6 +41,45 @@ export async function GET(request: NextRequest) {
     });
     const userCompanyIds = userCompanies.map((c) => c.id);
 
+    // If user has no companies, they're an employee - return their own record
+    if (userCompanyIds.length === 0) {
+      const ownEmployee = await prisma.employee.findFirst({
+        where: { email: user.email as string },
+        include: { quote: true, company: true },
+      });
+      if (ownEmployee) {
+        const nameParts = ownEmployee.fullName.split(" ");
+        const dependantsData = ownEmployee.dependantsData as unknown[] | null;
+        const mappedOwn = {
+          id: ownEmployee.id,
+          fullName: ownEmployee.fullName,
+          firstName: nameParts[0] || "",
+          lastName: nameParts.slice(1).join(" ") || "",
+          email: ownEmployee.email,
+          status: ownEmployee.status,
+          country: ownEmployee.country || "",
+          countryFlag: "",
+          phone: ownEmployee.phone || "",
+          gender: ownEmployee.gender || "",
+          dateOfBirth: ownEmployee.dateOfBirth,
+          nationality: ownEmployee.nationality || "",
+          height: ownEmployee.height || "",
+          weight: ownEmployee.weight || "",
+          includeSpouse: ownEmployee.includeSpouse,
+          includeDependant: ownEmployee.includeDependant,
+          dependantsCount: dependantsData?.length || 0,
+          onboardingComplete: ownEmployee.onboardingComplete,
+          planId: ownEmployee.quoteId?.slice(0, 8)?.toUpperCase() || "N/A",
+          companyName: ownEmployee.company?.legalName || "",
+          planName: ownEmployee.quote?.selectedPlan || "",
+          annualCost: ownEmployee.quote?.costPerMember || null,
+          createdAt: ownEmployee.createdAt,
+        };
+        return NextResponse.json({ employees: [mappedOwn], total: 1, page: 1, totalPages: 1 });
+      }
+      return NextResponse.json({ employees: [], total: 0, page: 1, totalPages: 1 });
+    }
+
     if (companyId && !userCompanyIds.includes(companyId)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -60,9 +99,39 @@ export async function GET(request: NextRequest) {
       prisma.employee.count({ where }),
     ]);
 
+    const mapped = employees.map((emp) => {
+      const nameParts = emp.fullName.split(" ");
+      const dependantsData = emp.dependantsData as unknown[] | null;
+      return {
+        id: emp.id,
+        fullName: emp.fullName,
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        email: emp.email,
+        status: emp.status,
+        country: emp.country || "",
+        countryFlag: "",
+        phone: emp.phone || "",
+        gender: emp.gender || "",
+        dateOfBirth: emp.dateOfBirth,
+        nationality: emp.nationality || "",
+        height: emp.height || "",
+        weight: emp.weight || "",
+        includeSpouse: emp.includeSpouse,
+        includeDependant: emp.includeDependant,
+        dependantsCount: dependantsData?.length || 0,
+        onboardingComplete: emp.onboardingComplete,
+        planId: emp.quoteId?.slice(0, 8)?.toUpperCase() || "N/A",
+        companyName: emp.company?.legalName || "",
+        planName: emp.quote?.selectedPlan || "",
+        annualCost: emp.quote?.costPerMember || null,
+        createdAt: emp.createdAt,
+      };
+    });
+
     const totalPages = Math.ceil(total / limit);
 
-    return NextResponse.json({ employees, total, page, totalPages });
+    return NextResponse.json({ employees: mapped, total, page, totalPages });
   } catch (error) {
     console.error('[API] GET /api/employees - Error:', error);
     return NextResponse.json(

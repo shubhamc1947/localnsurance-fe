@@ -19,6 +19,28 @@ export async function GET() {
     });
     const userCompanyIds = userCompanies.map((c) => c.id);
 
+    // If user has no companies, they're an employee - return stats for their own record
+    if (userCompanyIds.length === 0) {
+      const ownEmployee = await prisma.employee.findFirst({
+        where: { email: user.email as string },
+        include: { quote: true },
+      });
+
+      const ownStatus = ownEmployee?.status || "PENDING";
+      const ownCost = ownEmployee?.quote?.costPerMember || 0;
+
+      return NextResponse.json({
+        totalEmployees: ownEmployee ? 1 : 0,
+        activeEmployees: ownStatus === "ACTIVE" ? 1 : 0,
+        pendingEmployees: ownStatus === "PENDING" ? 1 : 0,
+        canceledEmployees: ownStatus === "CANCELED" ? 1 : 0,
+        totalQuotes: ownEmployee ? 1 : 0,
+        activeQuotes: ownStatus === "ACTIVE" ? 1 : 0,
+        totalCostFromActiveQuotes: ownCost,
+        recentInvoices: [],
+      });
+    }
+
     // Run all queries in parallel
     const [
       totalEmployees,

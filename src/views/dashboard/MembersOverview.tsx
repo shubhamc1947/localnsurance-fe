@@ -26,14 +26,14 @@ interface Member {
 function mapEmployeeToMember(emp: any): Member {
   return {
     id: emp.id,
-    name: `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || "Unknown",
-    avatar: emp.avatar || "/images/testimonial-avatar.jpg",
-    planId: emp.planId || emp.id?.slice(0, 6)?.toUpperCase() || "N/A",
+    name: emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || "Unknown",
+    avatar: "/images/testimonial-avatar.jpg",
+    planId: emp.planId || "N/A",
     status: (emp.status || "PENDING").toUpperCase() as MemberStatus,
     email: emp.email || "",
-    country: emp.country || "",
+    country: emp.country || "\u2014",
     countryFlag: emp.countryFlag || "",
-    dependents: emp.dependents ?? null,
+    dependents: emp.dependantsCount ?? null,
     annualCost: emp.annualCost ?? null,
   };
 }
@@ -55,20 +55,22 @@ export default function MembersOverview() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
+  const isEmployee = !companyId;
+
   const { data, isLoading } = useQuery({
     queryKey: ["employees", companyId, currentPage, searchTerm],
     queryFn: async () => {
       const params = new URLSearchParams({
-        companyId: companyId!,
         page: String(currentPage),
         limit: "10",
       });
+      if (companyId) params.set("companyId", companyId);
       if (searchTerm) params.set("search", searchTerm);
       const res = await fetch(`/api/employees?${params}`);
       if (!res.ok) throw new Error("Failed to fetch employees");
       return res.json();
     },
-    enabled: !!companyId,
+    enabled: !!user,
   });
 
   const members: Member[] = (data?.employees || []).map(mapEmployeeToMember);
@@ -90,7 +92,11 @@ export default function MembersOverview() {
     <div className="p-8 max-w-[1200px]">
       <div className="flex items-start justify-between mb-6">
         <h1 className="font-display text-3xl font-bold text-foreground leading-tight">
-          Overview of Company<br />Insurance Plan Members
+          {isEmployee ? (
+            <>My Insurance<br />Plan Details</>
+          ) : (
+            <>Overview of Company<br />Insurance Plan Members</>
+          )}
         </h1>
 
         {showBanner && (
@@ -227,7 +233,7 @@ export default function MembersOverview() {
                 </td>
                 <td className="p-4">
                   {member.annualCost !== null ? (
-                    <span className="text-sm font-semibold text-foreground">${member.annualCost}</span>
+                    <span className="text-sm font-semibold text-foreground">${member.annualCost.toLocaleString()}</span>
                   ) : (
                     <span className="text-sm text-muted-foreground/50">empty</span>
                   )}
