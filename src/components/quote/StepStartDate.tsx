@@ -3,35 +3,46 @@
 import { useState } from "react";
 import { useQuote } from "@/contexts/QuoteContext";
 import { STEPS } from "@/constants/onboarding-steps";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ArrowLeft, CalendarDays, Info } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const StepStartDate = () => {
   const { data, updateData, setCurrentStep } = useQuote();
-  const [startDate, setStartDate] = useState(data.planStartDate);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    data.planStartDate ? new Date(data.planStartDate) : undefined
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleSubmit = async () => {
-    if (!startDate.trim()) {
-      toast.error("Please enter a start date");
+    if (!selectedDate) {
+      toast.error("Please select a start date");
       return;
     }
 
     setIsLoading(true);
     try {
+      const isoDate = selectedDate.toISOString();
       const res = await fetch(`/api/quotes/${data.quoteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planStartDate: startDate }),
+        body: JSON.stringify({ planStartDate: isoDate }),
       });
       const json = await res.json();
       if (!res.ok) {
         throw new Error(json.error || "Failed to save start date");
       }
 
-      updateData({ planStartDate: startDate });
+      updateData({ planStartDate: isoDate });
       setCurrentStep(STEPS.SUCCESS);
     } catch (err: unknown) {
       const message =
@@ -42,27 +53,47 @@ const StepStartDate = () => {
     }
   };
 
+  // Only allow future dates, within 60 days
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   return (
     <div className="p-6 lg:p-10">
-      {/* Header */}
       <h2 className="font-display font-extrabold text-2xl md:text-3xl text-foreground mb-8">
         <span className="text-primary">Start date</span>
       </h2>
 
-      {/* Date field */}
+      {/* Date picker */}
       <div className="max-w-lg mb-6">
         <label className="text-xs text-muted-foreground mb-1 block">
           Date on which You wish Your Plan
         </label>
-        <div className="relative">
-          <Input
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            placeholder="October 31, 2037"
-            className="border-border pr-10"
-          />
-          <CalendarDays className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        </div>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal h-10 border-border",
+                !selectedDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarDays className="mr-2 h-4 w-4" />
+              {selectedDate ? format(selectedDate, "MMMM d, yyyy") : "Select a date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => {
+                setSelectedDate(date);
+                setOpen(false);
+              }}
+              disabled={(date) => date < today}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Info notices */}
@@ -96,7 +127,7 @@ const StepStartDate = () => {
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={isLoading}
+          disabled={isLoading || !selectedDate}
           className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10"
         >
           {isLoading ? "Saving..." : "Next"}

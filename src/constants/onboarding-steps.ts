@@ -7,6 +7,12 @@ export const STEPS = {
   EMPLOYEES: 5,
   START_DATE: 6,
   SUCCESS: 7,
+
+  // Personal onboarding sub-steps (used by StepPlanholderInfo, StepFamilyQuestions, etc.)
+  PLANHOLDER: 10,
+  FAMILY_QUESTIONS: 11,
+  SPOUSE: 12,
+  DEPENDANTS: 13,
 } as const;
 
 export type StepNumber = (typeof STEPS)[keyof typeof STEPS];
@@ -28,3 +34,24 @@ export const VISUAL_GROUP_STEPS: Record<number, number[]> = {
   4: [6],
   5: [7],
 };
+
+// ---------------------------------------------------------------------------
+// Helper functions for personal onboarding flow navigation
+// (used by StepFamilyQuestions, StepSpouseDetails, StepDependantDetails)
+// ---------------------------------------------------------------------------
+
+export function getNextAfterFamilyQuestions(
+  includeSpouse: boolean,
+  includeDependant: boolean
+): number {
+  if (includeSpouse) return STEPS.SPOUSE;
+  if (includeDependant) return STEPS.DEPENDANTS;
+  return STEPS.START_DATE;
+}
+
+export function getNextAfterSpouse(
+  includeDependant: boolean
+): number {
+  if (includeDependant) return STEPS.DEPENDANTS;
+  return STEPS.START_DATE;
+}

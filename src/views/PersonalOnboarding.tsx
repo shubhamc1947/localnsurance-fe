@@ -65,7 +65,7 @@ function createEmptyDependant(id: string): DependantForm {
   };
 }
 
-type FamilyFormStep = "questions" | "spouse" | "parents" | "dependants";
+type FamilyFormStep = "questions" | "spouse" | "dependants";
 
 // ---------------------------------------------------------------------------
 // Step Indicator (4 steps)
@@ -152,7 +152,6 @@ export default function PersonalOnboarding() {
 
   // Step 2 - Family Questions
   const [includeSpouse, setIncludeSpouse] = useState<boolean | null>(null);
-  const [includeParents, setIncludeParents] = useState<boolean | null>(null);
   const [includeDependant, setIncludeDependant] = useState<boolean | null>(null);
 
   // Step 3 - Family form sub-step
@@ -171,20 +170,6 @@ export default function PersonalOnboarding() {
   const [spWeight, setSpWeight] = useState("");
   const [spNationality, setSpNationality] = useState("");
   const [spDob, setSpDob] = useState("");
-
-  // Parent fields
-  const [prFirstName, setPrFirstName] = useState("");
-  const [prLastName, setPrLastName] = useState("");
-  const [prPreferredName, setPrPreferredName] = useState("");
-  const [prCountry, setPrCountry] = useState("");
-  const [prState, setPrState] = useState("");
-  const [prGender, setPrGender] = useState("");
-  const [prDob, setPrDob] = useState("");
-  const [prNationality, setPrNationality] = useState("");
-  const [prHeight, setPrHeight] = useState("");
-  const [prWeight, setPrWeight] = useState("");
-  const [prRelationship, setPrRelationship] = useState("");
-  const [prOccupation, setPrOccupation] = useState("");
 
   // Dependants
   const [dependants, setDependants] = useState<DependantForm[]>([
@@ -223,8 +208,8 @@ export default function PersonalOnboarding() {
   // ─── Determine next family form step ────────────────────────────────────────
   const getNextFamilyStep = useCallback(
     (after: FamilyFormStep): FamilyFormStep | "done" => {
-      const order: FamilyFormStep[] = ["spouse", "parents", "dependants"];
-      const flags = [includeSpouse, includeParents, includeDependant];
+      const order: FamilyFormStep[] = ["spouse", "dependants"];
+      const flags = [includeSpouse, includeDependant];
       const startIdx =
         after === "questions"
           ? 0
@@ -235,13 +220,13 @@ export default function PersonalOnboarding() {
       }
       return "done";
     },
-    [includeSpouse, includeParents, includeDependant]
+    [includeSpouse, includeDependant]
   );
 
   const getPrevFamilyStep = useCallback(
     (before: FamilyFormStep): FamilyFormStep => {
-      const order: FamilyFormStep[] = ["spouse", "parents", "dependants"];
-      const flags = [includeSpouse, includeParents, includeDependant];
+      const order: FamilyFormStep[] = ["spouse", "dependants"];
+      const flags = [includeSpouse, includeDependant];
       const endIdx = order.indexOf(before) - 1;
 
       for (let i = endIdx; i >= 0; i--) {
@@ -249,7 +234,7 @@ export default function PersonalOnboarding() {
       }
       return "questions";
     },
-    [includeSpouse, includeParents, includeDependant]
+    [includeSpouse, includeDependant]
   );
 
   // ─── Save personal details (Step 1) ────────────────────────────────────────
@@ -299,24 +284,15 @@ export default function PersonalOnboarding() {
 
   // ─── Save family questions (Step 2) → determine which forms to show ───────
   const handleFamilyQuestions = () => {
-    if (
-      includeSpouse === null &&
-      includeParents === null &&
-      includeDependant === null
-    ) {
-      toast.error("Please answer at least one question.");
+    if (includeSpouse === null || includeDependant === null) {
+      toast.error("Please answer both questions.");
       return;
     }
-    // Default unanswered to "no"
-    if (includeSpouse === null) setIncludeSpouse(false);
-    if (includeParents === null) setIncludeParents(false);
-    if (includeDependant === null) setIncludeDependant(false);
 
-    const sp = includeSpouse ?? false;
-    const pr = includeParents ?? false;
-    const dp = includeDependant ?? false;
+    const sp = includeSpouse;
+    const dp = includeDependant;
 
-    if (!sp && !pr && !dp) {
+    if (!sp && !dp) {
       // No family members — skip to done
       setStep(4);
       return;
@@ -327,8 +303,6 @@ export default function PersonalOnboarding() {
     // Determine which sub-form to show first
     if (sp) {
       setFamilyFormStep("spouse");
-    } else if (pr) {
-      setFamilyFormStep("parents");
     } else {
       setFamilyFormStep("dependants");
     }
@@ -374,50 +348,6 @@ export default function PersonalOnboarding() {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to save spouse details";
-      toast.error(message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // ─── Save parents ──────────────────────────────────────────────────────────
-  const handleSaveParents = async () => {
-    if (!prFirstName || !prLastName) {
-      toast.error("Please enter your parent's first and last name.");
-      return;
-    }
-    setSaving(true);
-    try {
-      const res = await fetch("/api/parents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quoteId,
-          firstName: prFirstName,
-          lastName: prLastName,
-          preferredName: prPreferredName,
-          country: prCountry,
-          state: prState,
-          gender: prGender,
-          dob: prDob,
-          nationality: prNationality,
-          height: prHeight,
-          weight: prWeight,
-          relationship: prRelationship,
-          occupation: prOccupation,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to save");
-      const next = getNextFamilyStep("parents");
-      if (next === "done") {
-        setStep(4);
-      } else {
-        setFamilyFormStep(next);
-      }
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to save parent details";
       toast.error(message);
     } finally {
       setSaving(false);
@@ -506,7 +436,6 @@ export default function PersonalOnboarding() {
   // ─── Computed values ────────────────────────────────────────────────────────
   const pdStateOptions = STATES_BY_COUNTRY[pdCountry] || [];
   const spStateOptions = STATES_BY_COUNTRY[spCountry] || [];
-  const prStateOptions = STATES_BY_COUNTRY[prCountry] || [];
 
   // =========================================================================
   // STEP 1: Personal Details
@@ -813,43 +742,6 @@ export default function PersonalOnboarding() {
         </div>
       </div>
 
-      {/* Parents card */}
-      <div className="mb-6">
-        <p className="text-sm font-semibold text-foreground mb-3">
-          Include your parents?
-        </p>
-        <div className="grid grid-cols-2 gap-4 max-w-lg">
-          <button
-            onClick={() => setIncludeParents(true)}
-            className={`p-5 rounded-xl border-2 transition-all text-left ${
-              includeParents === true
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-muted-foreground/40"
-            }`}
-          >
-            <Users className="w-5 h-5 mb-2 text-foreground" />
-            <p className="font-bold text-foreground text-sm">Yes</p>
-            <p className="text-xs text-muted-foreground">
-              Include my parents
-            </p>
-          </button>
-          <button
-            onClick={() => setIncludeParents(false)}
-            className={`p-5 rounded-xl border-2 transition-all text-left ${
-              includeParents === false
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-muted-foreground/40"
-            }`}
-          >
-            <Users className="w-5 h-5 mb-2 text-muted-foreground" />
-            <p className="font-bold text-foreground text-sm">No</p>
-            <p className="text-xs text-muted-foreground">
-              Don&apos;t include parents
-            </p>
-          </button>
-        </div>
-      </div>
-
       {/* Dependants card */}
       <div className="mb-10">
         <p className="text-sm font-semibold text-foreground mb-3">
@@ -898,6 +790,7 @@ export default function PersonalOnboarding() {
         </Button>
         <Button
           onClick={handleFamilyQuestions}
+          disabled={includeSpouse === null || includeDependant === null}
           className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10 flex items-center gap-2"
         >
           Continue <ArrowRight className="w-4 h-4" />
@@ -1142,250 +1035,6 @@ export default function PersonalOnboarding() {
     </div>
   );
 
-  // ── Parents Form ────────────────────────────────────────────────────────────
-  const renderParentsForm = () => (
-    <div className="p-6 lg:p-10">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="font-display font-extrabold text-2xl md:text-3xl text-foreground">
-          Tell us about your{" "}
-          <span className="text-primary">parent</span>
-        </h2>
-        <span className="text-xs text-muted-foreground bg-muted/30 px-3 py-1 rounded-full hidden md:block">
-          Parent details
-        </span>
-      </div>
-
-      {/* Row 1: Names */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            First name
-          </label>
-          <Input
-            value={prFirstName}
-            onChange={(e) => setPrFirstName(e.target.value)}
-            placeholder="Robert"
-            className="border-border"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Last name
-          </label>
-          <Input
-            value={prLastName}
-            onChange={(e) => setPrLastName(e.target.value)}
-            placeholder="Doe"
-            className="border-border"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            What does he/she like to be called
-          </label>
-          <Input
-            value={prPreferredName}
-            onChange={(e) => setPrPreferredName(e.target.value)}
-            placeholder="Preferred name"
-            className="border-border"
-          />
-        </div>
-      </div>
-
-      {/* Row 2: Location + Gender */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Country
-          </label>
-          <Select
-            value={prCountry}
-            onValueChange={(v) => {
-              setPrCountry(v);
-              setPrState("");
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select country" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            State
-          </label>
-          {prStateOptions.length > 0 ? (
-            <Select value={prState} onValueChange={setPrState}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select state" />
-              </SelectTrigger>
-              <SelectContent>
-                {prStateOptions.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              value={prState}
-              onChange={(e) => setPrState(e.target.value)}
-              placeholder="State / Province"
-              className="border-border"
-            />
-          )}
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Gender
-          </label>
-          <div className="flex h-9 rounded-md border border-border overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setPrGender("male")}
-              className={`flex-1 text-xs font-medium transition-colors ${
-                prGender === "male"
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-transparent text-foreground hover:bg-muted/50"
-              }`}
-            >
-              Male
-            </button>
-            <button
-              type="button"
-              onClick={() => setPrGender("female")}
-              className={`flex-1 text-xs font-medium transition-colors ${
-                prGender === "female"
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-transparent text-foreground hover:bg-muted/50"
-              }`}
-            >
-              Female
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3: Relationship, DOB, Occupation */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Relationship
-          </label>
-          <Select value={prRelationship} onValueChange={setPrRelationship}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select relationship" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="father">Father</SelectItem>
-              <SelectItem value="mother">Mother</SelectItem>
-              <SelectItem value="father-in-law">Father-in-law</SelectItem>
-              <SelectItem value="mother-in-law">Mother-in-law</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Date of birth
-          </label>
-          <Input
-            value={prDob}
-            onChange={(e) => setPrDob(e.target.value)}
-            placeholder="01/15/1960"
-            className="border-border"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Occupation
-          </label>
-          <Input
-            value={prOccupation}
-            onChange={(e) => setPrOccupation(e.target.value)}
-            placeholder="Retired"
-            className="border-border"
-          />
-        </div>
-      </div>
-
-      {/* Row 4: Physical + Nationality */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Height
-          </label>
-          <Input
-            value={prHeight}
-            onChange={(e) => setPrHeight(e.target.value)}
-            placeholder="175cm"
-            className="border-border"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Weight
-          </label>
-          <Input
-            value={prWeight}
-            onChange={(e) => setPrWeight(e.target.value)}
-            placeholder="80kg"
-            className="border-border"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">
-            Nationality
-          </label>
-          <Select value={prNationality} onValueChange={setPrNationality}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select nationality" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          onClick={() => {
-            const prev = getPrevFamilyStep("parents");
-            if (prev === "questions") {
-              setStep(2);
-            } else {
-              setFamilyFormStep(prev);
-            }
-          }}
-          className="rounded-full px-8 flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Button>
-        <Button
-          onClick={handleSaveParents}
-          disabled={saving}
-          className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10"
-        >
-          {saving ? "Saving..." : "Save & Continue"}
-        </Button>
-      </div>
-    </div>
-  );
-
   // ── Dependants Form ─────────────────────────────────────────────────────────
   const renderDependantsForm = () => (
     <div className="p-6 lg:p-10">
@@ -1571,16 +1220,29 @@ export default function PersonalOnboarding() {
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Relationship to Planholder
                 </label>
-                <Input
+                <Select
                   value={dep.relationshipToPlanholder}
-                  onChange={(e) =>
+                  onValueChange={(v) =>
                     updateDependant(i, {
-                      relationshipToPlanholder: e.target.value,
+                      relationshipToPlanholder: v,
                     })
                   }
-                  placeholder="Child"
-                  className="border-border"
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select relationship" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Father">Father</SelectItem>
+                    <SelectItem value="Mother">Mother</SelectItem>
+                    <SelectItem value="Son">Son</SelectItem>
+                    <SelectItem value="Daughter">Daughter</SelectItem>
+                    <SelectItem value="Brother">Brother</SelectItem>
+                    <SelectItem value="Sister">Sister</SelectItem>
+                    <SelectItem value="Spouse">Spouse</SelectItem>
+                    <SelectItem value="Guardian">Guardian</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">
@@ -1647,8 +1309,6 @@ export default function PersonalOnboarding() {
     switch (familyFormStep) {
       case "spouse":
         return renderSpouseForm();
-      case "parents":
-        return renderParentsForm();
       case "dependants":
         return renderDependantsForm();
       default:

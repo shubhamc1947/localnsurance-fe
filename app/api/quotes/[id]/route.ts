@@ -89,7 +89,7 @@ export async function PUT(
         ...(status !== undefined && { status }),
         ...(includeSpouse !== undefined && { includeSpouse }),
         ...(includeDependant !== undefined && { includeDependant }),
-        ...(planStartDate !== undefined && { planStartDate }),
+        ...(planStartDate !== undefined && { planStartDate: new Date(planStartDate) }),
       },
       include: { company: true },
     });

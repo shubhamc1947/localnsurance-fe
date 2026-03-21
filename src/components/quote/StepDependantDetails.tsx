@@ -254,14 +254,27 @@ const StepDependantDetails = () => {
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Relationship to Planholder
                 </label>
-                <Input
+                <Select
                   value={dep.relationshipToPlanholder}
-                  onChange={(e) =>
-                    updateDependant(i, { relationshipToPlanholder: e.target.value })
+                  onValueChange={(v) =>
+                    updateDependant(i, { relationshipToPlanholder: v })
                   }
-                  placeholder="Child"
-                  className="border-border"
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select relationship" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Father">Father</SelectItem>
+                    <SelectItem value="Mother">Mother</SelectItem>
+                    <SelectItem value="Son">Son</SelectItem>
+                    <SelectItem value="Daughter">Daughter</SelectItem>
+                    <SelectItem value="Brother">Brother</SelectItem>
+                    <SelectItem value="Sister">Sister</SelectItem>
+                    <SelectItem value="Spouse">Spouse</SelectItem>
+                    <SelectItem value="Guardian">Guardian</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">
@@ -300,9 +313,7 @@ const StepDependantDetails = () => {
         <Button
           variant="outline"
           onClick={() => {
-            if (data.includeParents === true) {
-              setCurrentStep(STEPS.PARENTS);
-            } else if (data.includeSpouse === true) {
+            if (data.includeSpouse === true) {
               setCurrentStep(STEPS.SPOUSE);
             } else {
               setCurrentStep(STEPS.FAMILY_QUESTIONS);

@@ -82,7 +82,6 @@ const StepSpouseDetails = () => {
       });
 
       const nextStep = getNextAfterSpouse(
-        data.includeParents === true,
         data.includeDependant === true
       );
       setCurrentStep(nextStep);

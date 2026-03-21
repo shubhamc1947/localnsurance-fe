@@ -17,8 +17,13 @@ const StepEmailVerify = () => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Auto-send OTP on mount
+  // Auto-send OTP on mount (only if not already verified)
   useEffect(() => {
+    if (data.emailVerified) {
+      // Already verified — skip straight to next step
+      setCurrentStep(STEPS.COMPANY);
+      return;
+    }
     const sendOtp = async () => {
       try {
         const res = await fetch("/api/auth/send-verification-otp", {

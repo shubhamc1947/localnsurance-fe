@@ -4,30 +4,27 @@ import { useState } from "react";
 import { useQuote } from "@/contexts/QuoteContext";
 import { STEPS, getNextAfterFamilyQuestions } from "@/constants/onboarding-steps";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, HeartOff, Users, UserX, Link, Unlink } from "lucide-react";
+import { ArrowLeft, Heart, HeartOff, Link, Unlink } from "lucide-react";
 
 const StepFamilyQuestions = () => {
   const { data, updateData, setCurrentStep } = useQuote();
 
   const [wantsSpouse, setWantsSpouse] = useState<boolean | null>(data.includeSpouse);
-  const [wantsParents, setWantsParents] = useState<boolean | null>(data.includeParents);
   const [wantsDependant, setWantsDependant] = useState<boolean | null>(data.includeDependant);
 
   const allAnswered =
-    wantsSpouse !== null && wantsParents !== null && wantsDependant !== null;
+    wantsSpouse !== null && wantsDependant !== null;
 
   const handleContinue = () => {
     if (!allAnswered) return;
 
     updateData({
       includeSpouse: wantsSpouse,
-      includeParents: wantsParents,
       includeDependant: wantsDependant,
     });
 
     const nextStep = getNextAfterFamilyQuestions(
       wantsSpouse!,
-      wantsParents!,
       wantsDependant!
     );
     setCurrentStep(nextStep);
@@ -77,44 +74,7 @@ const StepFamilyQuestions = () => {
         </div>
       </div>
 
-      {/* Question 2: Parents */}
-      <div className="mb-8">
-        <p className="text-sm font-semibold text-foreground mb-3">
-          Do you want to include your parents in the plan?
-        </p>
-        <div className="grid grid-cols-2 gap-4 max-w-lg">
-          <button
-            onClick={() => setWantsParents(true)}
-            className={`p-6 rounded-xl border-2 transition-all text-left ${
-              wantsParents === true
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-muted-foreground/40"
-            }`}
-          >
-            <Users className="w-6 h-6 mb-2 text-foreground" />
-            <p className="font-bold text-foreground">Yes</p>
-            <p className="text-xs text-muted-foreground">
-              Include my parents in this plan.
-            </p>
-          </button>
-          <button
-            onClick={() => setWantsParents(false)}
-            className={`p-6 rounded-xl border-2 transition-all text-left ${
-              wantsParents === false
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-muted-foreground/40"
-            }`}
-          >
-            <UserX className="w-6 h-6 mb-2 text-foreground" />
-            <p className="font-bold text-foreground">No</p>
-            <p className="text-xs text-muted-foreground">
-              Don&apos;t include my parents.
-            </p>
-          </button>
-        </div>
-      </div>
-
-      {/* Question 3: Dependant */}
+      {/* Question 2: Dependant */}
       <div className="mb-10">
         <p className="text-sm font-semibold text-foreground mb-3">
           Do you want to include your dependant in the plan?
