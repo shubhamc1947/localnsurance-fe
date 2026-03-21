@@ -304,8 +304,9 @@ export default function PersonalOnboarding() {
           const empMeJson = await empMeRes.json();
           if (empMeRes.ok && empMeJson.employee) {
             const emp = empMeJson.employee;
-            setFirstName(emp.fullName?.split(" ")[0] || "");
-            setLastName(emp.fullName?.split(" ").slice(1).join(" ") || "");
+            setFirstName(emp.fullName?.split(" ")[0] || firstName || "");
+            setLastName(emp.fullName?.split(" ").slice(1).join(" ") || lastName || "");
+            if (emp.email) setEmail(emp.email);
             if (emp.phone) setPhone(emp.phone);
             if (emp.phoneType) setPhoneType(emp.phoneType);
             if (emp.gender) setGender(emp.gender);

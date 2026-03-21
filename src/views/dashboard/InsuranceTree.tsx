@@ -23,7 +23,7 @@ interface TreeNode {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildTreeFromEmployees(employees: any[], user: any, isEmployeeView?: boolean): TreeNode {
+function buildTreeFromEmployees(employees: any[], user: any, isEmployeeView?: boolean, quoteStatus?: string): TreeNode {
   const rootName = isEmployeeView
     ? (employees?.[0]?.companyName || "Company Admin")
     : (`${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Admin");
@@ -70,7 +70,7 @@ function buildTreeFromEmployees(employees: any[], user: any, isEmployeeView?: bo
     name: rootName,
     role: user?.jobRole || `Admin - ${companyName}`,
     flag: "",
-    status: "ACTIVE",
+    status: (quoteStatus || "DRAFT").toUpperCase() as NodeStatus,
     actionLabel: "View Details",
     children,
   };
@@ -170,7 +170,7 @@ function TreeCard({ node, isEmployee }: { node: TreeNode; isEmployee?: boolean }
 }
 
 export default function InsuranceTree() {
-  const { user } = useAuth();
+  const { user, latestQuote } = useAuth();
   const company = user?.companies?.[0] as { id: string; legalName?: string } | undefined;
   const companyId = company?.id;
   const isEmployee = !companyId;
@@ -199,7 +199,7 @@ export default function InsuranceTree() {
     enabled: !!user,
   });
 
-  const treeData = buildTreeFromEmployees(data?.employees || [], user, isEmployee);
+  const treeData = buildTreeFromEmployees(data?.employees || [], user, isEmployee, latestQuote?.status);
 
   return (
     <div className="p-8">
