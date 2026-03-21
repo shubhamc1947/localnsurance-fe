@@ -384,28 +384,32 @@ const PricingCalculator = () => {
               </div>
 
               {data.selectedPlan && data.selectedRegions.length > 0 && totalMembers > 0 && (
-                <div className="mt-4 bg-muted/30 rounded-xl p-3">
-                  <h4 className="text-xs font-semibold text-foreground mb-2">Cost Breakdown by Region</h4>
-                  {data.selectedRegions.map((regionId) => {
-                    const region = regions.find(r => r.id === regionId);
-                    let regionCost = 0;
-                    for (const group of data.ageGroups) {
-                      if (group.count > 0) {
-                        const rate = getMemberRate(group.range as AgeBand, [regionId], data.selectedPlan);
-                        regionCost += group.count * rate;
+                <div className="mt-3 rounded-lg border border-border/60 overflow-hidden">
+                  <div className="bg-muted/40 px-3 py-1.5">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Regional Breakdown</span>
+                  </div>
+                  <div className="px-3 py-1">
+                    {data.selectedRegions.map((regionId) => {
+                      const region = regions.find(r => r.id === regionId);
+                      let regionCost = 0;
+                      for (const group of data.ageGroups) {
+                        if (group.count > 0) {
+                          const rate = getMemberRate(group.range as AgeBand, [regionId], data.selectedPlan);
+                          regionCost += group.count * rate;
+                        }
                       }
-                    }
-                    const perMember = totalMembers > 0 ? Math.round(regionCost / totalMembers) : 0;
-                    return (
-                      <div key={regionId} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-                        <span className="text-xs text-muted-foreground">{region?.label}</span>
-                        <span className="text-xs font-semibold text-foreground">{formatCurrency(perMember)}/member</span>
-                      </div>
-                    );
-                  })}
-                  <div className="flex items-center justify-between pt-2 mt-1 border-t border-border">
-                    <span className="text-xs font-bold text-foreground">Average (blended)</span>
-                    <span className="text-xs font-bold text-accent">{formatCurrency(costPerMember)}/member</span>
+                      const perMember = totalMembers > 0 ? Math.round(regionCost / totalMembers) : 0;
+                      return (
+                        <div key={regionId} className="flex items-center justify-between py-1 text-[11px]">
+                          <span className="text-muted-foreground">{region?.label}</span>
+                          <span className="font-medium text-foreground">{formatCurrency(perMember)}<span className="text-muted-foreground font-normal">/yr</span></span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-1.5 bg-accent/5 border-t border-border/60">
+                    <span className="text-[11px] font-bold text-foreground">Blended avg</span>
+                    <span className="text-[11px] font-bold text-accent">{formatCurrency(costPerMember)}/yr</span>
                   </div>
                 </div>
               )}
