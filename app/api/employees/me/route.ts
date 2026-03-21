@@ -38,13 +38,24 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { section, ...data } = body;
 
+    console.log(`[API] PUT /api/employees/me - Looking up employee for email: ${currentUser.email}, userId: ${currentUser.userId}`);
+
     const employee = await prisma.employee.findFirst({
       where: { email: currentUser.email as string },
     });
 
     if (!employee) {
-      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      console.log(`[API] PUT /api/employees/me - No employee found for email: ${currentUser.email}`);
+      // Fallback: if this is actually an admin (has companies), they shouldn't be here
+      // Return a helpful error
+      const userCompanies = await prisma.company.findMany({ where: { userId: currentUser.userId as string }, select: { id: true } });
+      if (userCompanies.length > 0) {
+        return NextResponse.json({ error: "You are a company admin. Please use the quote-based API instead.", isAdmin: true }, { status: 400 });
+      }
+      return NextResponse.json({ error: "Employee not found. Please contact your administrator." }, { status: 404 });
     }
+
+    console.log(`[API] PUT /api/employees/me - Found employee: ${employee.id}, section: ${section}`);
 
     let updateData: Record<string, unknown> = {};
 

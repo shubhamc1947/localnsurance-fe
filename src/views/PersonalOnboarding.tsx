@@ -298,7 +298,7 @@ export default function PersonalOnboarding() {
   useEffect(() => {
     async function fetchQuote() {
       try {
-        if (isEmployee && !quoteId) {
+        if (isEmployee) {
           // Employee flow: fetch their own employee record to pre-fill data
           const empMeRes = await fetch("/api/employees/me");
           const empMeJson = await empMeRes.json();
@@ -411,8 +411,8 @@ export default function PersonalOnboarding() {
 
     setSaving(true);
     try {
-      // Use employee API only if truly an employee (no companies AND no quoteId from own quotes)
-      const useEmployeeApi = isEmployee && !quoteId;
+      // Use employee API if user has no companies (they're an employee, not admin)
+      const useEmployeeApi = isEmployee;
       if (useEmployeeApi) {
         const res = await fetch("/api/employees/me", {
           method: "PUT",
@@ -494,7 +494,7 @@ export default function PersonalOnboarding() {
     const dp = includeDependant;
 
     // For employees, persist the no-spouse / no-dependants flags
-    if (isEmployee && !quoteId) {
+    if (isEmployee) {
       try {
         if (!sp) {
           await fetch("/api/employees/me", {
@@ -540,7 +540,7 @@ export default function PersonalOnboarding() {
 
     setSaving(true);
     try {
-      if (isEmployee && !quoteId) {
+      if (isEmployee) {
         const res = await fetch("/api/employees/me", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -628,7 +628,7 @@ export default function PersonalOnboarding() {
 
     setSaving(true);
     try {
-      if (isEmployee && !quoteId) {
+      if (isEmployee) {
         const res = await fetch("/api/employees/me", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
