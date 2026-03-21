@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, HeartOff, Baby, BabyIcon } from "lucide-react";
+import { ArrowLeft, Heart, HeartOff } from "lucide-react";
 import { toast } from "sonner";
 import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
 
@@ -25,9 +25,8 @@ const StepSpouseDetails = () => {
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  // Local selections for the question phase
+  // Local selection for the question phase
   const [wantsSpouse, setWantsSpouse] = useState<boolean | null>(data.includeSpouse);
-  const [wantsDependant, setWantsDependant] = useState<boolean | null>(data.includeDependant);
 
   // Spouse form state
   const [spFirstName, setSpFirstName] = useState(data.spouseFirstName);
@@ -46,20 +45,16 @@ const StepSpouseDetails = () => {
 
   const spStateOptions = STATES_BY_COUNTRY[spCountry] || [];
 
-  // ─── Phase 1: Questions ─────────────────────────────────────────────────────
+  // ─── Phase 1: Spouse Question ─────────────────────────────────────────────
   if (phase === "question") {
     const handleContinue = () => {
-      updateData({
-        includeSpouse: wantsSpouse,
-        includeDependant: wantsDependant,
-      });
+      updateData({ includeSpouse: wantsSpouse });
 
       if (wantsSpouse) {
         setPhase("form");
-      } else if (wantsDependant) {
-        setCurrentStep(STEPS.DEPENDANT);
       } else {
-        setCurrentStep(STEPS.EMPLOYEES);
+        // No spouse — move on to dependant question
+        setCurrentStep(STEPS.DEPENDANT);
       }
     };
 
@@ -102,43 +97,6 @@ const StepSpouseDetails = () => {
           </button>
         </div>
 
-        {/* Dependant question */}
-        <h3 className="font-display font-extrabold text-xl md:text-2xl text-foreground mb-6">
-          Do you want to include your{" "}
-          <span className="text-primary">dependant</span> in the plan?
-        </h3>
-
-        <div className="grid grid-cols-2 gap-4 w-full max-w-lg mb-10">
-          <button
-            onClick={() => setWantsDependant(true)}
-            className={`p-6 rounded-xl border-2 transition-all text-left ${
-              wantsDependant === true
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-muted-foreground/40"
-            }`}
-          >
-            <Baby className="w-6 h-6 mb-2 text-foreground" />
-            <p className="font-bold text-foreground">Yes</p>
-            <p className="text-xs text-muted-foreground">
-              I want to include my dependant in this plan.
-            </p>
-          </button>
-          <button
-            onClick={() => setWantsDependant(false)}
-            className={`p-6 rounded-xl border-2 transition-all text-left ${
-              wantsDependant === false
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-muted-foreground/40"
-            }`}
-          >
-            <BabyIcon className="w-6 h-6 mb-2 text-foreground" />
-            <p className="font-bold text-foreground">No</p>
-            <p className="text-xs text-muted-foreground">
-              I don&apos;t want to include a dependant in the plan.
-            </p>
-          </button>
-        </div>
-
         {/* Action buttons */}
         <div className="flex items-center gap-3">
           <Button
@@ -150,7 +108,7 @@ const StepSpouseDetails = () => {
           </Button>
           <Button
             onClick={handleContinue}
-            disabled={wantsSpouse === null || wantsDependant === null}
+            disabled={wantsSpouse === null}
             className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-10"
           >
             Continue
@@ -205,11 +163,7 @@ const StepSpouseDetails = () => {
         spouseWeight: spWeight,
       });
 
-      if (data.includeDependant) {
-        setCurrentStep(STEPS.DEPENDANT);
-      } else {
-        setCurrentStep(STEPS.EMPLOYEES);
-      }
+      setCurrentStep(STEPS.DEPENDANT);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to save spouse details";

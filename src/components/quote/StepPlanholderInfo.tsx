@@ -12,13 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, UserX } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { COUNTRIES, STATES_BY_COUNTRY } from "@/data/data";
 
 const StepPlanholderInfo = () => {
   const { data, updateData, setCurrentStep } = useQuote();
-  const [showForm, setShowForm] = useState(data.includesSelf === true);
   const [isLoading, setIsLoading] = useState(false);
 
   // Local form state for planholder fields
@@ -38,58 +37,6 @@ const StepPlanholderInfo = () => {
 
   const stateOptions = STATES_BY_COUNTRY[phCountry] || [];
 
-  // ─── Phase 1: "Does this include you?" ─────────────────────────────────────
-  if (!showForm && data.includesSelf !== true) {
-    return (
-      <div className="p-6 lg:p-10 flex flex-col items-center text-center">
-        <h2 className="font-display font-extrabold text-2xl md:text-3xl text-foreground mb-3 mt-8">
-          Does this <span className="text-primary">include you?</span>
-        </h2>
-        <p className="text-muted-foreground text-sm mb-10 max-w-md">
-          Let us know if the plan administrator is also covered under this insurance plan.
-        </p>
-
-        <div className="grid grid-cols-2 gap-4 w-full max-w-lg mb-10">
-          <button
-            onClick={() => {
-              updateData({ includesSelf: true });
-              setShowForm(true);
-            }}
-            className="p-6 rounded-xl border-2 transition-all text-left border-border hover:border-muted-foreground/40"
-          >
-            <Users className="w-6 h-6 mb-2 text-foreground" />
-            <p className="font-bold text-foreground">Yes</p>
-            <p className="text-xs text-muted-foreground">
-              I am included or want to include myself
-            </p>
-          </button>
-          <button
-            onClick={() => {
-              updateData({ includesSelf: false });
-              setCurrentStep(STEPS.SPOUSE);
-            }}
-            className="p-6 rounded-xl border-2 transition-all text-left border-border hover:border-muted-foreground/40"
-          >
-            <UserX className="w-6 h-6 mb-2 text-foreground" />
-            <p className="font-bold text-foreground">No</p>
-            <p className="text-xs text-muted-foreground">
-              It&apos;s for employees only
-            </p>
-          </button>
-        </div>
-
-        <Button
-          variant="outline"
-          onClick={() => setCurrentStep(STEPS.COMPANY)}
-          className="rounded-full px-16 py-3 w-full max-w-md flex items-center justify-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Button>
-      </div>
-    );
-  }
-
-  // ─── Phase 2: Planholder Form ──────────────────────────────────────────────
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
@@ -355,7 +302,7 @@ const StepPlanholderInfo = () => {
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
-          onClick={() => setCurrentStep(STEPS.COMPANY)}
+          onClick={() => setCurrentStep(STEPS.EMPLOYEES)}
           className="rounded-full px-8 flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" /> Back

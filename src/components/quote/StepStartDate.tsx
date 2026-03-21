@@ -89,7 +89,7 @@ const StepStartDate = () => {
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
-          onClick={() => setCurrentStep(STEPS.EMPLOYEES)}
+          onClick={() => setCurrentStep(data.includesSelf === true ? STEPS.DEPENDANT : STEPS.EMPLOYEES)}
           className="rounded-full px-8 flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" /> Back

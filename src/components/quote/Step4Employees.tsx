@@ -9,7 +9,7 @@ import { ArrowLeft, Upload, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { Employee } from "@/types/quote";
 import { toast } from "sonner";
-import { STEPS } from "@/constants/onboarding-steps";
+import { STEPS, getNextAfterEmployees } from "@/constants/onboarding-steps";
 
 const Step4Employees = () => {
   const { data, updateData, setCurrentStep } = useQuote();
@@ -54,7 +54,7 @@ const Step4Employees = () => {
       if (!res.ok) {
         throw new Error(responseData.error || "Failed to send invites");
       }
-      setCurrentStep(STEPS.START_DATE);
+      setCurrentStep(getNextAfterEmployees(data.includesSelf === true));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to send invites";
       toast.error(message);
@@ -141,7 +141,7 @@ const Step4Employees = () => {
           <div className="mt-6">
             <Button
               variant="outline"
-              onClick={() => setCurrentStep(STEPS.DEPENDANT)}
+              onClick={() => setCurrentStep(STEPS.INCLUDE_SELF)}
               className="rounded-full px-8 flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" /> Back

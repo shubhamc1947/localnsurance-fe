@@ -35,7 +35,7 @@ const Step2Company = () => {
 
     // If already registered, just advance to next step
     if (data.quoteId && data.companyId) {
-      setCurrentStep(STEPS.PLANHOLDER);
+      setCurrentStep(STEPS.INCLUDE_SELF);
       return;
     }
 
@@ -74,7 +74,7 @@ const Step2Company = () => {
         companyId: result.company.id
       });
 
-      setCurrentStep(STEPS.PLANHOLDER);
+      setCurrentStep(STEPS.INCLUDE_SELF);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Registration failed";
       toast.error(message);

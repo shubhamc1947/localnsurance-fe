@@ -77,7 +77,7 @@ const StepDependantDetails = () => {
       }
 
       updateData({ dependants });
-      setCurrentStep(STEPS.EMPLOYEES);
+      setCurrentStep(STEPS.START_DATE);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to save dependant details";

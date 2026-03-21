@@ -6,28 +6,75 @@ import StepIndicator from "@/components/quote/StepIndicator";
 import Step1Admin from "@/components/quote/Step1Admin";
 import StepEmailVerify from "@/components/quote/StepEmailVerify";
 import Step2Company from "@/components/quote/Step2Company";
+import StepIncludeSelf from "@/components/quote/StepIncludeSelf";
+import Step4Employees from "@/components/quote/Step4Employees";
 import StepPlanholderInfo from "@/components/quote/StepPlanholderInfo";
 import StepSpouseDetails from "@/components/quote/StepSpouseDetails";
 import StepDependantDetails from "@/components/quote/StepDependantDetails";
-import Step4Employees from "@/components/quote/Step4Employees";
 import StepStartDate from "@/components/quote/StepStartDate";
-import { STEPS } from "@/constants/onboarding-steps";
-import { useEffect } from "react";
+import { STEPS, getNextAfterEmployees } from "@/constants/onboarding-steps";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Onboarding = () => {
   const { currentStep, setCurrentStep } = useQuote();
   const router = useRouter();
+  const [showResume, setShowResume] = useState(false);
+  const [savedStep, setSavedStep] = useState(0);
 
   // If user lands here without going through calculator, redirect
+  // Also check for a saved step to offer resume
   useEffect(() => {
     if (currentStep === 0) {
       setCurrentStep(1);
+    } else if (currentStep > STEPS.ADMIN) {
+      // User has a saved step beyond the first step — offer to resume
+      setSavedStep(currentStep);
+      setShowResume(true);
     }
-  }, [currentStep, setCurrentStep]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleResume = () => {
+    setShowResume(false);
+    // currentStep is already set to the saved value
+  };
+
+  const handleStartOver = () => {
+    setShowResume(false);
+    setCurrentStep(STEPS.ADMIN);
+  };
 
   const renderStep = () => {
+    // Show resume prompt if applicable
+    if (showResume && savedStep > STEPS.ADMIN) {
+      return (
+        <div className="p-6 lg:p-10 flex flex-col items-center text-center">
+          <h2 className="font-display font-extrabold text-2xl md:text-3xl text-foreground mb-3 mt-8">
+            Resume your <span className="text-primary">journey?</span>
+          </h2>
+          <p className="text-muted-foreground text-sm mb-8 max-w-md">
+            It looks like you were in the middle of onboarding. Would you like to pick up where you left off?
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleStartOver}
+              className="rounded-full px-8 py-3 border border-border text-foreground hover:bg-muted/50 transition-colors text-sm font-medium"
+            >
+              Start over
+            </button>
+            <button
+              onClick={handleResume}
+              className="rounded-full px-8 py-3 bg-accent text-accent-foreground hover:bg-accent/90 transition-colors text-sm font-medium"
+            >
+              Resume
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     switch (currentStep) {
       case STEPS.ADMIN:
         return <Step1Admin />;
@@ -35,14 +82,16 @@ const Onboarding = () => {
         return <StepEmailVerify />;
       case STEPS.COMPANY:
         return <Step2Company />;
+      case STEPS.INCLUDE_SELF:
+        return <StepIncludeSelf />;
+      case STEPS.EMPLOYEES:
+        return <Step4Employees />;
       case STEPS.PLANHOLDER:
         return <StepPlanholderInfo />;
       case STEPS.SPOUSE:
         return <StepSpouseDetails />;
       case STEPS.DEPENDANT:
         return <StepDependantDetails />;
-      case STEPS.EMPLOYEES:
-        return <Step4Employees />;
       case STEPS.START_DATE:
         return <StepStartDate />;
       case STEPS.SUCCESS:
