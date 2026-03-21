@@ -8,19 +8,14 @@ import StepEmailVerify from "@/components/quote/StepEmailVerify";
 import Step2Company from "@/components/quote/Step2Company";
 import StepIncludeSelf from "@/components/quote/StepIncludeSelf";
 import Step4Employees from "@/components/quote/Step4Employees";
-import StepPlanholderInfo from "@/components/quote/StepPlanholderInfo";
-import StepFamilyQuestions from "@/components/quote/StepFamilyQuestions";
-import StepSpouseDetails from "@/components/quote/StepSpouseDetails";
-import StepParentsDetails from "@/components/quote/StepParentsDetails";
-import StepDependantDetails from "@/components/quote/StepDependantDetails";
 import StepStartDate from "@/components/quote/StepStartDate";
-import { STEPS, getNextAfterEmployees } from "@/constants/onboarding-steps";
+import { STEPS } from "@/constants/onboarding-steps";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Onboarding = () => {
-  const { currentStep, setCurrentStep } = useQuote();
+  const { currentStep, setCurrentStep, data } = useQuote();
   const router = useRouter();
   const [showResume, setShowResume] = useState(false);
   const [savedStep, setSavedStep] = useState(0);
@@ -37,6 +32,20 @@ const Onboarding = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Redirect after the success loading animation
+  useEffect(() => {
+    if (currentStep !== STEPS.SUCCESS) return;
+    const timer = setTimeout(() => {
+      if (data.includesSelf === true) {
+        router.push("/profile/onboard");
+      } else {
+        router.push("/dashboard/members");
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep]);
 
   const handleResume = () => {
     setShowResume(false);
@@ -88,16 +97,6 @@ const Onboarding = () => {
         return <StepIncludeSelf />;
       case STEPS.EMPLOYEES:
         return <Step4Employees />;
-      case STEPS.PLANHOLDER:
-        return <StepPlanholderInfo />;
-      case STEPS.FAMILY_QUESTIONS:
-        return <StepFamilyQuestions />;
-      case STEPS.SPOUSE:
-        return <StepSpouseDetails />;
-      case STEPS.PARENTS:
-        return <StepParentsDetails />;
-      case STEPS.DEPENDANT:
-        return <StepDependantDetails />;
       case STEPS.START_DATE:
         return <StepStartDate />;
       case STEPS.SUCCESS:

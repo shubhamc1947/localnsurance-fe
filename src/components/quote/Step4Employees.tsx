@@ -9,7 +9,7 @@ import { ArrowLeft, Upload, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { Employee } from "@/types/quote";
 import { toast } from "sonner";
-import { STEPS, getNextAfterEmployees } from "@/constants/onboarding-steps";
+import { STEPS } from "@/constants/onboarding-steps";
 
 const Step4Employees = () => {
   const { data, updateData, setCurrentStep } = useQuote();
@@ -54,7 +54,7 @@ const Step4Employees = () => {
       if (!res.ok) {
         throw new Error(responseData.error || "Failed to send invites");
       }
-      setCurrentStep(getNextAfterEmployees(data.includesSelf === true));
+      setCurrentStep(STEPS.START_DATE);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to send invites";
       toast.error(message);
