@@ -112,22 +112,34 @@ export async function PUT(
       },
     });
 
-    // When activating: set all linked employees to ACTIVE too
+    // When activating: set employees to ACTIVE + company isActive = true
     if (status === "ACTIVE") {
       await prisma.employee.updateMany({
         where: { quoteId: id },
         data: { status: "ACTIVE" },
       });
-      console.log(`[API] Activated all employees for quote ${id}`);
+      if (updatedQuote.companyId) {
+        await prisma.company.update({
+          where: { id: updatedQuote.companyId },
+          data: { isActive: true },
+        });
+      }
+      console.log(`[API] Activated employees + company for quote ${id}`);
     }
 
-    // When expiring: set all linked employees to CANCELED
+    // When expiring: set employees to CANCELED + company isActive = false
     if (status === "EXPIRED") {
       await prisma.employee.updateMany({
         where: { quoteId: id },
         data: { status: "CANCELED" },
       });
-      console.log(`[API] Canceled all employees for quote ${id}`);
+      if (updatedQuote.companyId) {
+        await prisma.company.update({
+          where: { id: updatedQuote.companyId },
+          data: { isActive: false },
+        });
+      }
+      console.log(`[API] Expired employees + company for quote ${id}`);
     }
 
     // Send activation email when status changes to ACTIVE
