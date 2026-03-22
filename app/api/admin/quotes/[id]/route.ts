@@ -112,6 +112,24 @@ export async function PUT(
       },
     });
 
+    // When activating: set all linked employees to ACTIVE too
+    if (status === "ACTIVE") {
+      await prisma.employee.updateMany({
+        where: { quoteId: id },
+        data: { status: "ACTIVE" },
+      });
+      console.log(`[API] Activated all employees for quote ${id}`);
+    }
+
+    // When expiring: set all linked employees to CANCELED
+    if (status === "EXPIRED") {
+      await prisma.employee.updateMany({
+        where: { quoteId: id },
+        data: { status: "CANCELED" },
+      });
+      console.log(`[API] Canceled all employees for quote ${id}`);
+    }
+
     // Send activation email when status changes to ACTIVE
     if (status === "ACTIVE" && updatedQuote.user) {
       try {
