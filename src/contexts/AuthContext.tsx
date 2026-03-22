@@ -92,6 +92,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setUser(data.user);
+
+    // Re-fetch full user data (includes companies, latestQuote)
+    await fetchUser();
+
     return data.user;
   };
 
@@ -99,6 +103,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
     setLatestQuote(null);
+    // Clear all cached data
+    try {
+      localStorage.removeItem("localsurance-personal-data");
+      localStorage.removeItem("localsurance-personal-step");
+      localStorage.removeItem("localsurance-quote-data");
+      localStorage.removeItem("localsurance-quote-step");
+    } catch {}
     router.push("/login");
   };
 
