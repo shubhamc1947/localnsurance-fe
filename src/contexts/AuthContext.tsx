@@ -45,6 +45,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   register: (data: Record<string, unknown>) => Promise<any>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -77,6 +78,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
+
+  // Auto-refresh user data when window regains focus (catches status changes from super admin)
+  useEffect(() => {
+    const onFocus = () => {
+      if (user) fetchUser();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [user, fetchUser]);
 
   const login = async (email: string, password: string) => {
     const res = await fetch("/api/auth/login", {
@@ -131,7 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, latestQuote, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, latestQuote, loading, login, logout, register, refreshUser: fetchUser }}>
       {children}
     </AuthContext.Provider>
   );
