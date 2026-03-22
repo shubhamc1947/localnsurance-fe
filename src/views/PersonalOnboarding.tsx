@@ -134,9 +134,9 @@ const LS_DATA_KEY = "localsurance-personal-data";
 export default function PersonalOnboarding() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  // Determine if user is employee or admin — only after auth is loaded
-  // Admin = has companies, Employee = no companies
-  const isEmployee = !authLoading && !!user && (!user.companies || (user.companies as unknown[]).length === 0);
+  // Determine admin vs employee — resolved server-side during data fetch
+  const [userType, setUserType] = useState<"admin" | "employee" | null>(null);
+  const isEmployee = userType === "employee";
 
   // Resume prompt
   const [showResume, setShowResume] = useState(false);
@@ -294,70 +294,59 @@ export default function PersonalOnboarding() {
     }
   }, [user]);
 
-  // ─── Fetch user's quote (admin owns it, employee is linked via employee record)
+  // ─── Fetch user's data and determine admin vs employee
   useEffect(() => {
     async function fetchQuote() {
       try {
-        if (isEmployee) {
-          // Employee flow: fetch their own employee record to pre-fill data
-          const empMeRes = await fetch("/api/employees/me");
-          const empMeJson = await empMeRes.json();
-          if (empMeRes.ok && empMeJson.employee) {
-            const emp = empMeJson.employee;
-            setFirstName(emp.fullName?.split(" ")[0] || firstName || "");
-            setLastName(emp.fullName?.split(" ").slice(1).join(" ") || lastName || "");
-            if (emp.email) setEmail(emp.email);
-            if (emp.phone) setPhone(emp.phone);
-            if (emp.phoneType) setPhoneType(emp.phoneType);
-            if (emp.gender) setGender(emp.gender);
-            if (emp.dateOfBirth) setDob(new Date(emp.dateOfBirth).toISOString().split("T")[0]);
-            if (emp.nationality) setNationality(emp.nationality);
-            if (emp.height) setHeight(emp.height);
-            if (emp.weight) setWeight(emp.weight);
-            if (emp.country) setPdCountry(emp.country);
-            if (emp.state) setPdState(emp.state);
-            if (emp.postalCode) setPdPostalCode(emp.postalCode);
-            if (emp.includeSpouse != null) setIncludeSpouse(emp.includeSpouse);
-            if (emp.spouseFirstName) setSpFirstName(emp.spouseFirstName);
-            if (emp.spouseLastName) setSpLastName(emp.spouseLastName);
-            if (emp.spousePreferredName) setSpPreferredName(emp.spousePreferredName);
-            if (emp.spouseGender) setSpGender(emp.spouseGender);
-            if (emp.spouseDob) setSpDob(new Date(emp.spouseDob).toISOString().split("T")[0]);
-            if (emp.spouseCountry) setSpCountry(emp.spouseCountry);
-            if (emp.spouseNationality) setSpNationality(emp.spouseNationality);
-            if (emp.spouseHeight) setSpHeight(emp.spouseHeight);
-            if (emp.spouseWeight) setSpWeight(emp.spouseWeight);
-            if (emp.spouseOccupation) setSpOccupation(emp.spouseOccupation);
-            if (emp.spouseOccIndustry) setSpOccupationIndustry(emp.spouseOccIndustry);
-            if (emp.includeDependant != null) setIncludeDependant(emp.includeDependant);
-            if (emp.dependantsData && Array.isArray(emp.dependantsData) && emp.dependantsData.length > 0) {
-              setDependants(emp.dependantsData as DependantForm[]);
-            }
-            if (emp.quoteId) setQuoteId(emp.quoteId);
-          }
+        // Step 1: Try fetching user's own quotes (admin flow)
+        const quotesRes = await fetch("/api/quotes");
+        const quotesJson = await quotesRes.json();
+        if (quotesRes.ok && quotesJson.quotes && quotesJson.quotes.length > 0) {
+          // User owns quotes = they are an admin
+          setUserType("admin");
+          setQuoteId(quotesJson.quotes[0].id);
           setQuoteLoading(false);
           return;
         }
 
-        // Admin flow: user's own quotes
-        const res = await fetch("/api/quotes");
-        const json = await res.json();
-        if (res.ok && json.quotes && json.quotes.length > 0) {
-          setQuoteId(json.quotes[0].id);
-          setQuoteLoading(false);
-          return;
-        }
+        // Step 2: No quotes owned = they are an employee
+        setUserType("employee");
 
-        // Fallback: user is an employee — find their employee record's quote
-        const empRes = await fetch("/api/employees");
-        const empJson = await empRes.json();
-        if (empRes.ok && empJson.employees && empJson.employees.length > 0) {
-          const emp = empJson.employees[0];
-          if (emp.quoteId) {
-            setQuoteId(emp.quoteId);
-            setQuoteLoading(false);
-            return;
+        // Employee flow: fetch their own employee record to pre-fill data
+        const empMeRes = await fetch("/api/employees/me");
+        const empMeJson = await empMeRes.json();
+        if (empMeRes.ok && empMeJson.employee) {
+          const emp = empMeJson.employee;
+          setFirstName(emp.fullName?.split(" ")[0] || firstName || "");
+          setLastName(emp.fullName?.split(" ").slice(1).join(" ") || lastName || "");
+          if (emp.email) setEmail(emp.email);
+          if (emp.phone) setPhone(emp.phone);
+          if (emp.phoneType) setPhoneType(emp.phoneType);
+          if (emp.gender) setGender(emp.gender);
+          if (emp.dateOfBirth) setDob(new Date(emp.dateOfBirth).toISOString().split("T")[0]);
+          if (emp.nationality) setNationality(emp.nationality);
+          if (emp.height) setHeight(emp.height);
+          if (emp.weight) setWeight(emp.weight);
+          if (emp.country) setPdCountry(emp.country);
+          if (emp.state) setPdState(emp.state);
+          if (emp.postalCode) setPdPostalCode(emp.postalCode);
+          if (emp.includeSpouse != null) setIncludeSpouse(emp.includeSpouse);
+          if (emp.spouseFirstName) setSpFirstName(emp.spouseFirstName);
+          if (emp.spouseLastName) setSpLastName(emp.spouseLastName);
+          if (emp.spousePreferredName) setSpPreferredName(emp.spousePreferredName);
+          if (emp.spouseGender) setSpGender(emp.spouseGender);
+          if (emp.spouseDob) setSpDob(new Date(emp.spouseDob).toISOString().split("T")[0]);
+          if (emp.spouseCountry) setSpCountry(emp.spouseCountry);
+          if (emp.spouseNationality) setSpNationality(emp.spouseNationality);
+          if (emp.spouseHeight) setSpHeight(emp.spouseHeight);
+          if (emp.spouseWeight) setSpWeight(emp.spouseWeight);
+          if (emp.spouseOccupation) setSpOccupation(emp.spouseOccupation);
+          if (emp.spouseOccIndustry) setSpOccupationIndustry(emp.spouseOccIndustry);
+          if (emp.includeDependant != null) setIncludeDependant(emp.includeDependant);
+          if (emp.dependantsData && Array.isArray(emp.dependantsData) && emp.dependantsData.length > 0) {
+            setDependants(emp.dependantsData as DependantForm[]);
           }
+          if (emp.quoteId) setQuoteId(emp.quoteId);
         }
       } catch {
         // Fetch failed
@@ -368,7 +357,7 @@ export default function PersonalOnboarding() {
     if (!authLoading) {
       fetchQuote();
     }
-  }, [authLoading, isEmployee]);
+  }, [authLoading]);
 
   // ─── Determine next family form step ────────────────────────────────────────
   const getNextFamilyStep = useCallback(
