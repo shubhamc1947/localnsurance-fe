@@ -128,18 +128,12 @@ function PersonalStepIndicator({ step }: { step: number }) {
 // Main Component
 // ---------------------------------------------------------------------------
 
-const LS_STEP_KEY = "localsurance-personal-step";
-const LS_DATA_KEY = "localsurance-personal-data";
-
 export default function PersonalOnboarding() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   // Determine admin vs employee — resolved server-side during data fetch
   const [userType, setUserType] = useState<"admin" | "employee" | null>(null);
   const isEmployee = userType === "employee";
-
-  // Resume prompt
-  const [showResume, setShowResume] = useState(false);
 
   // Global state
   const [step, setStep] = useState(1);
@@ -186,103 +180,6 @@ export default function PersonalOnboarding() {
   // Dependants
   const [dependants, setDependants] = useState<DependantForm[]>([
     createEmptyDependant("1"),
-  ]);
-
-  // ─── localStorage resume support ──────────────────────────────────────────
-  // Check for saved data on mount
-  useEffect(() => {
-    try {
-      const savedStep = localStorage.getItem(LS_STEP_KEY);
-      const savedData = localStorage.getItem(LS_DATA_KEY);
-      if (savedStep && savedData && parseInt(savedStep, 10) > 1) {
-        setShowResume(true);
-      }
-    } catch {
-      // localStorage unavailable
-    }
-  }, []);
-
-  const restoreSavedData = useCallback(() => {
-    try {
-      const savedStep = localStorage.getItem(LS_STEP_KEY);
-      const savedData = localStorage.getItem(LS_DATA_KEY);
-      if (!savedStep || !savedData) return;
-      const d = JSON.parse(savedData);
-      setStep(parseInt(savedStep, 10));
-      // personal
-      if (d.firstName) setFirstName(d.firstName);
-      if (d.lastName) setLastName(d.lastName);
-      if (d.email) setEmail(d.email);
-      if (d.pdCountry) setPdCountry(d.pdCountry);
-      if (d.pdState) setPdState(d.pdState);
-      if (d.pdPostalCode) setPdPostalCode(d.pdPostalCode);
-      if (d.phone) setPhone(d.phone);
-      if (d.phoneType) setPhoneType(d.phoneType);
-      if (d.gender) setGender(d.gender);
-      if (d.dob) setDob(d.dob);
-      if (d.nationality) setNationality(d.nationality);
-      if (d.height) setHeight(d.height);
-      if (d.weight) setWeight(d.weight);
-      // family questions
-      if (d.includeSpouse !== undefined) setIncludeSpouse(d.includeSpouse);
-      if (d.includeDependant !== undefined) setIncludeDependant(d.includeDependant);
-      if (d.familyFormStep) setFamilyFormStep(d.familyFormStep);
-      // spouse
-      if (d.spFirstName) setSpFirstName(d.spFirstName);
-      if (d.spLastName) setSpLastName(d.spLastName);
-      if (d.spPreferredName) setSpPreferredName(d.spPreferredName);
-      if (d.spCountry) setSpCountry(d.spCountry);
-      if (d.spState) setSpState(d.spState);
-      if (d.spOccupation) setSpOccupation(d.spOccupation);
-      if (d.spOccupationIndustry) setSpOccupationIndustry(d.spOccupationIndustry);
-      if (d.spGender) setSpGender(d.spGender);
-      if (d.spHeight) setSpHeight(d.spHeight);
-      if (d.spWeight) setSpWeight(d.spWeight);
-      if (d.spNationality) setSpNationality(d.spNationality);
-      if (d.spDob) setSpDob(d.spDob);
-      // dependants
-      if (d.dependants && d.dependants.length > 0) setDependants(d.dependants);
-    } catch {
-      // corrupted data, ignore
-    }
-    setShowResume(false);
-  }, []);
-
-  const clearSavedData = useCallback(() => {
-    try {
-      localStorage.removeItem(LS_STEP_KEY);
-      localStorage.removeItem(LS_DATA_KEY);
-    } catch {
-      // ignore
-    }
-    setShowResume(false);
-  }, []);
-
-  // Persist to localStorage on every change
-  useEffect(() => {
-    try {
-      localStorage.setItem(LS_STEP_KEY, String(step));
-      localStorage.setItem(
-        LS_DATA_KEY,
-        JSON.stringify({
-          firstName, lastName, email, pdCountry, pdState, pdPostalCode,
-          phone, phoneType, gender, dob, nationality, height, weight,
-          includeSpouse, includeDependant, familyFormStep,
-          spFirstName, spLastName, spPreferredName, spCountry, spState,
-          spOccupation, spOccupationIndustry, spGender, spHeight, spWeight,
-          spNationality, spDob, dependants,
-        })
-      );
-    } catch {
-      // localStorage unavailable
-    }
-  }, [
-    step, firstName, lastName, email, pdCountry, pdState, pdPostalCode,
-    phone, phoneType, gender, dob, nationality, height, weight,
-    includeSpouse, includeDependant, familyFormStep,
-    spFirstName, spLastName, spPreferredName, spCountry, spState,
-    spOccupation, spOccupationIndustry, spGender, spHeight, spWeight,
-    spNationality, spDob, dependants,
   ]);
 
   // ─── Pre-fill from auth ─────────────────────────────────────────────────────
@@ -1547,31 +1444,6 @@ export default function PersonalOnboarding() {
 
         {/* Main content */}
         <div className="bg-background rounded-2xl shadow-sm border border-border overflow-hidden">
-          {/* Resume prompt */}
-          {showResume && (
-            <div className="bg-primary/5 border-b border-primary/20 p-4 flex items-center justify-between gap-4">
-              <p className="text-sm text-foreground">
-                You have unsaved progress. <span className="font-semibold">Resume where you left off?</span>
-              </p>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearSavedData}
-                  className="rounded-full text-xs"
-                >
-                  Start Fresh
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={restoreSavedData}
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full text-xs"
-                >
-                  Resume
-                </Button>
-              </div>
-            </div>
-          )}
           {step < 4 && <PersonalStepIndicator step={step} />}
           <AnimatePresence mode="wait">
             <motion.div
