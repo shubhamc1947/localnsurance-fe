@@ -103,6 +103,7 @@ export async function GET(request: NextRequest) {
         planId: emp.quoteId?.slice(0, 8)?.toUpperCase() || "N/A",
         companyName: emp.company?.legalName || "",
         planName: emp.quote?.selectedPlan || "",
+        quoteStatus: emp.quote?.status || "DRAFT",
         annualCost: emp.quote?.costPerMember || null,
         createdAt: emp.createdAt,
       };

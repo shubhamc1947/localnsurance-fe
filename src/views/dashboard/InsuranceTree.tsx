@@ -199,7 +199,12 @@ export default function InsuranceTree() {
     enabled: !!user,
   });
 
-  const treeData = buildTreeFromEmployees(data?.employees || [], user, isEmployee, latestQuote?.status);
+  // Get quote status: admin uses latestQuote, employee gets it from their employee record's quote
+  const quoteStatus = latestQuote?.status
+    || (data?.employees?.[0] as any)?.quote?.status
+    || (data?.employees?.[0] as any)?.quoteStatus
+    || undefined;
+  const treeData = buildTreeFromEmployees(data?.employees || [], user, isEmployee, quoteStatus);
 
   return (
     <div className="p-8">
