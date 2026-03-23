@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "@/index.css";
 import { Providers } from "./providers";
-
+import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
   title: "Localsurance - Global Health Insurance for Remote Teams",
   description: "Comprehensive health insurance coverage for distributed teams worldwide. Get affordable plans tailored to your remote workforce.",
@@ -28,6 +28,8 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-background font-sans antialiased">
         <Providers>{children}</Providers>
+        <Analytics />
+
       </body>
     </html>
   );
