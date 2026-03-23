@@ -95,7 +95,7 @@ function TreeCard({ node, isEmployee }: { node: TreeNode; isEmployee?: boolean }
   return (
     <div className="flex flex-col items-center">
       {/* Days badge */}
-      {node.daysUntilEnd && !isEmployee && (
+      {node.daysUntilEnd != null && node.daysUntilEnd > 0 && !isEmployee && (
         <div className="flex items-center gap-2 mb-2 bg-primary/5 rounded-full px-3 py-1">
           <span className="text-xs text-primary">Days until plan ends:</span>
           <span className="text-xs font-bold text-primary-foreground bg-primary rounded px-2 py-0.5">{node.daysUntilEnd}</span>
@@ -199,11 +199,12 @@ export default function InsuranceTree() {
     enabled: !!user,
   });
 
-  // Get quote status: admin uses latestQuote, employee gets it from their employee record's quote
+  // Get quote status from multiple sources
+  const firstEmp = data?.employees?.[0] as any;
   const quoteStatus = latestQuote?.status
-    || (data?.employees?.[0] as any)?.quote?.status
-    || (data?.employees?.[0] as any)?.quoteStatus
-    || undefined;
+    || firstEmp?.quoteStatus
+    || firstEmp?.quote?.status
+    || (firstEmp?.status === "ACTIVE" ? "ACTIVE" : undefined);
   const treeData = buildTreeFromEmployees(data?.employees || [], user, isEmployee, quoteStatus);
 
   return (
